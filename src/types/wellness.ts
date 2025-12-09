@@ -1,0 +1,70 @@
+export interface WaterLog {
+  id: string;
+  date: string;
+  amount: number;
+  time: string;
+}
+
+export interface FoodItem {
+  id: string;
+  name: string;
+  calories: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  servingSize?: string;
+}
+
+export interface FoodLog {
+  id: string;
+  date: string;
+  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  foodItem: FoodItem;
+  time: string;
+}
+
+export interface FitnessLog {
+  id: string;
+  date: string;
+  activityType: string;
+  duration: number;
+  caloriesBurned: number;
+  notes?: string;
+  time: string;
+}
+
+export interface UserGoals {
+  waterGoal: number; // in ml
+  calorieGoal: number;
+  fitnessGoal: number; // in minutes per week
+}
+
+export interface DailyStats {
+  date: string;
+  waterIntake: number;
+  caloriesConsumed: number;
+  fitnessMinutes: number;
+  points: number;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  unlockedAt?: string;
+  category: 'water' | 'nutrition' | 'fitness' | 'streak';
+}
+
+export interface UserProfile {
+  name: string;
+  age?: number;
+  gender?: 'male' | 'female' | 'other';
+  weight?: number; // kg
+  height?: number; // cm
+  activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+  goals: UserGoals;
+  streak: number;
+  totalPoints: number;
+  achievements: string[];
+}
