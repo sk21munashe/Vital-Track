@@ -51,7 +51,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="h-full flex flex-col bg-background pb-4 overflow-y-auto relative">
       {/* Header */}
       <header className="pt-6 pb-4 px-5">
         <motion.div
@@ -176,7 +176,7 @@ export default function Dashboard() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowQuickAdd(true)}
-        className="fixed bottom-24 right-5 w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg flex items-center justify-center"
+        className="absolute bottom-4 right-5 w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg flex items-center justify-center"
       >
         <Plus className="w-6 h-6" />
       </motion.button>
