@@ -13,7 +13,7 @@ const navItems = [
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50">
+    <nav className="flex-shrink-0 w-full z-50 pb-safe">
       <div className="mx-auto max-w-lg">
         <div className="mx-3 mb-3 glass rounded-2xl p-2 shadow-lg">
           <div className="flex items-center justify-around">

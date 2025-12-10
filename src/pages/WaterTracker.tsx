@@ -76,7 +76,7 @@ export default function WaterTracker() {
   const maxAmount = Math.max(...weekData.map(d => d.amount), profile.goals.waterGoal);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="h-full flex flex-col bg-background pb-4 overflow-y-auto">
       {/* Header */}
       <header className="pt-6 pb-4 px-5">
         <div className="flex items-center gap-4">

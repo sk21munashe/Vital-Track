@@ -19,15 +19,17 @@ const App = () => (
       <Toaster />
       <Sonner position="top-center" richColors />
       <HashRouter>
-        <div className="min-h-screen bg-background">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/water" element={<WaterTracker />} />
-            <Route path="/calories" element={<CalorieTracker />} />
-            <Route path="/fitness" element={<FitnessTracker />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+        <div className="h-full w-full flex flex-col bg-background overflow-hidden">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/water" element={<WaterTracker />} />
+              <Route path="/calories" element={<CalorieTracker />} />
+              <Route path="/fitness" element={<FitnessTracker />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
           <BottomNav />
         </div>
       </HashRouter>
