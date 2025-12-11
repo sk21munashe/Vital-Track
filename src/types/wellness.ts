@@ -56,6 +56,24 @@ export interface Achievement {
   category: 'water' | 'nutrition' | 'fitness' | 'streak';
 }
 
+export interface Habit {
+  id: string;
+  name: string;
+  icon: string;
+  color: 'water' | 'nutrition' | 'fitness' | 'custom';
+  targetCount: number;
+  unit: string;
+  createdAt: string;
+}
+
+export interface HabitLog {
+  id: string;
+  habitId: string;
+  date: string;
+  count: number;
+  time: string;
+}
+
 export interface UserProfile {
   name: string;
   age?: number;

@@ -5,7 +5,9 @@ import {
   FitnessLog, 
   UserProfile, 
   DailyStats,
-  FoodItem 
+  FoodItem,
+  Habit,
+  HabitLog
 } from '@/types/wellness';
 import { format, isToday, parseISO, differenceInDays, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 
@@ -16,6 +18,8 @@ const STORAGE_KEYS = {
   USER_PROFILE: 'vitaltrack_user_profile',
   DAILY_STATS: 'vitaltrack_daily_stats',
   LAST_VISIT: 'vitaltrack_last_visit',
+  HABITS: 'vitaltrack_habits',
+  HABIT_LOGS: 'vitaltrack_habit_logs',
 };
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -38,6 +42,8 @@ export function useWellnessData() {
   const [waterLogs, setWaterLogs] = useState<WaterLog[]>([]);
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
   const [fitnessLogs, setFitnessLogs] = useState<FitnessLog[]>([]);
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [habitLogs, setHabitLogs] = useState<HabitLog[]>([]);
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -51,10 +57,15 @@ export function useWellnessData() {
         const storedProfile = localStorage.getItem(STORAGE_KEYS.USER_PROFILE);
         const lastVisit = localStorage.getItem(STORAGE_KEYS.LAST_VISIT);
 
+        const storedHabits = localStorage.getItem(STORAGE_KEYS.HABITS);
+        const storedHabitLogs = localStorage.getItem(STORAGE_KEYS.HABIT_LOGS);
+
         if (storedWater) setWaterLogs(JSON.parse(storedWater));
         if (storedFood) setFoodLogs(JSON.parse(storedFood));
         if (storedFitness) setFitnessLogs(JSON.parse(storedFitness));
         if (storedProfile) setProfile(JSON.parse(storedProfile));
+        if (storedHabits) setHabits(JSON.parse(storedHabits));
+        if (storedHabitLogs) setHabitLogs(JSON.parse(storedHabitLogs));
 
         // Check and update streak
         if (lastVisit) {
@@ -98,6 +109,16 @@ export function useWellnessData() {
     if (!isLoaded) return;
     localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
   }, [profile, isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(habits));
+  }, [habits, isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    localStorage.setItem(STORAGE_KEYS.HABIT_LOGS, JSON.stringify(habitLogs));
+  }, [habitLogs, isLoaded]);
 
   // Water functions
   const addWater = useCallback((amount: number) => {
@@ -235,11 +256,58 @@ export function useWellnessData() {
     return waterPoints + foodPoints + fitnessPoints;
   }, [waterLogs, foodLogs, fitnessLogs]);
 
+  // Habits functions
+  const addHabit = useCallback((name: string, icon: string, color: Habit['color'], targetCount: number, unit: string) => {
+    const newHabit: Habit = {
+      id: generateId(),
+      name,
+      icon,
+      color,
+      targetCount,
+      unit,
+      createdAt: today(),
+    };
+    setHabits(prev => [...prev, newHabit]);
+  }, []);
+
+  const deleteHabit = useCallback((habitId: string) => {
+    setHabits(prev => prev.filter(h => h.id !== habitId));
+    setHabitLogs(prev => prev.filter(log => log.habitId !== habitId));
+  }, []);
+
+  const logHabit = useCallback((habitId: string, count: number = 1) => {
+    const existingLog = habitLogs.find(log => log.habitId === habitId && log.date === today());
+    if (existingLog) {
+      setHabitLogs(prev => prev.map(log => 
+        log.id === existingLog.id 
+          ? { ...log, count: log.count + count }
+          : log
+      ));
+    } else {
+      const newLog: HabitLog = {
+        id: generateId(),
+        habitId,
+        date: today(),
+        count,
+        time: now(),
+      };
+      setHabitLogs(prev => [...prev, newLog]);
+    }
+    addPoints(5);
+  }, [habitLogs, addPoints]);
+
+  const getTodayHabitProgress = useCallback((habitId: string) => {
+    const log = habitLogs.find(l => l.habitId === habitId && l.date === today());
+    return log?.count || 0;
+  }, [habitLogs]);
+
   return {
     // Data
     waterLogs,
     foodLogs,
     fitnessLogs,
+    habits,
+    habitLogs,
     profile,
     isLoaded,
 
@@ -260,6 +328,12 @@ export function useWellnessData() {
     getTodayFitnessLogs,
     getWeekFitness,
     getWeekFitnessMinutes,
+
+    // Habits
+    addHabit,
+    deleteHabit,
+    logHabit,
+    getTodayHabitProgress,
 
     // Profile & Points
     updateGoals,

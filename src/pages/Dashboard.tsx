@@ -8,6 +8,7 @@ import { QuickLogButton } from '@/components/QuickLogButton';
 import { StreakBadge } from '@/components/StreakBadge';
 import { PointsBadge } from '@/components/PointsBadge';
 import { DashboardCard } from '@/components/DashboardCard';
+import { HabitsSection } from '@/components/HabitsSection';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import { motivationalQuotes } from '@/data/foodDatabase';
 import { Button } from '@/components/ui/button';
@@ -25,11 +26,16 @@ export default function Dashboard() {
   
   const {
     profile,
+    habits,
     getTodayWater,
     getTodayCalories,
     getTodayFitness,
     getTodayPoints,
     addWater,
+    addHabit,
+    deleteHabit,
+    logHabit,
+    getTodayHabitProgress,
   } = useWellnessData();
 
   useEffect(() => {
@@ -144,7 +150,7 @@ export default function Dashboard() {
       </div>
 
       {/* Daily Challenges */}
-      <DashboardCard className="mx-5" delay={0.3}>
+      <DashboardCard className="mx-5 mb-6" delay={0.3}>
         <h2 className="text-lg font-semibold mb-4">Daily Challenges</h2>
         <div className="space-y-3">
           <ChallengeItem
@@ -170,6 +176,15 @@ export default function Dashboard() {
           />
         </div>
       </DashboardCard>
+
+      {/* Custom Habits */}
+      <HabitsSection
+        habits={habits}
+        addHabit={addHabit}
+        deleteHabit={deleteHabit}
+        logHabit={logHabit}
+        getTodayHabitProgress={getTodayHabitProgress}
+      />
 
       {/* Floating Action Button */}
       <motion.button
