@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, Droplets, Plus, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format, subDays } from 'date-fns';
-import { WaterBottle } from '@/components/WaterBottle';
+
 import { DashboardCard } from '@/components/DashboardCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import { Button } from '@/components/ui/button';
@@ -99,14 +99,6 @@ export default function WaterTracker() {
         </div>
       </header>
 
-      {/* Water Bottle Visualization */}
-      <div className="px-5 mb-4">
-        <DashboardCard className="glass-water p-3">
-          <div className="h-36">
-            <WaterBottle current={todayWater} goal={profile.goals.waterGoal} />
-          </div>
-        </DashboardCard>
-      </div>
 
       {/* Quick Add Buttons */}
       <div className="px-5 mb-6">
