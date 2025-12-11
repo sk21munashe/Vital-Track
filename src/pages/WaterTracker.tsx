@@ -100,9 +100,9 @@ export default function WaterTracker() {
       </header>
 
       {/* Water Bottle Visualization */}
-      <div className="px-5 mb-6">
-        <DashboardCard className="glass-water">
-          <div className="h-64">
+      <div className="px-5 mb-4">
+        <DashboardCard className="glass-water p-3">
+          <div className="h-36">
             <WaterBottle current={todayWater} goal={profile.goals.waterGoal} />
           </div>
         </DashboardCard>
