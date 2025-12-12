@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, User, Target, Trophy, Star, Flame, Droplets, Utensils, Dumbbell, Edit2, LogOut } from 'lucide-react';
+import { ChevronLeft, User, Target, Trophy, Star, Flame, Droplets, Utensils, Dumbbell, Edit2, LogOut, Gift, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardCard } from '@/components/DashboardCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
@@ -13,19 +13,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { AchievementProgress } from '@/components/AchievementProgress';
+import { TierRanking } from '@/components/TierRanking';
+import { DailyRewards } from '@/components/DailyRewards';
 
 interface ProfileProps {
   onSignOut?: () => void;
 }
 
-const achievements = [
-  { id: 'hydration_hero', name: 'Hydration Hero', description: 'Drink 2L of water for 7 days', icon: '💧', category: 'water' },
-  { id: 'meal_master', name: 'Meal Master', description: 'Log 100 meals', icon: '🍽️', category: 'nutrition' },
-  { id: 'fitness_warrior', name: 'Fitness Warrior', description: 'Complete 150 min of activity in a week', icon: '💪', category: 'fitness' },
-  { id: 'streak_starter', name: 'Streak Starter', description: 'Maintain a 7-day streak', icon: '🔥', category: 'streak' },
-  { id: 'perfect_day', name: 'Perfect Day', description: 'Complete all daily goals', icon: '⭐', category: 'streak' },
-  { id: 'early_bird', name: 'Early Bird', description: 'Log breakfast before 9 AM', icon: '🌅', category: 'nutrition' },
+const achievementDefinitions = [
+  { id: 'hydration_hero', name: 'Hydration Hero', description: 'Drink 2L of water for 7 days', icon: '💧', category: 'water' as const, requirement: 7 },
+  { id: 'meal_master', name: 'Meal Master', description: 'Log 100 meals', icon: '🍽️', category: 'nutrition' as const, requirement: 100 },
+  { id: 'fitness_warrior', name: 'Fitness Warrior', description: 'Complete 150 min of activity in a week', icon: '💪', category: 'fitness' as const, requirement: 150 },
+  { id: 'streak_starter', name: 'Streak Starter', description: 'Maintain a 7-day streak', icon: '🔥', category: 'streak' as const, requirement: 7 },
+  { id: 'perfect_day', name: 'Perfect Day', description: 'Complete all daily goals', icon: '⭐', category: 'streak' as const, requirement: 1 },
+  { id: 'point_collector', name: 'Point Collector', description: 'Earn 500 total points', icon: '🏆', category: 'streak' as const, requirement: 500 },
+  { id: 'water_week', name: 'Water Week', description: 'Log water every day for a week', icon: '🌊', category: 'water' as const, requirement: 7 },
+  { id: 'marathon', name: 'Marathon Month', description: 'Log 30 workouts in a month', icon: '🏃', category: 'fitness' as const, requirement: 30 },
 ];
 
 export default function Profile({ onSignOut }: ProfileProps) {
@@ -35,7 +41,67 @@ export default function Profile({ onSignOut }: ProfileProps) {
   const [editName, setEditName] = useState('');
   const [editGoals, setEditGoals] = useState({ water: '', calories: '', fitness: '' });
 
-  const { profile, updateProfile, updateGoals, getTodayPoints } = useWellnessData();
+  const { 
+    profile, 
+    updateProfile, 
+    updateGoals, 
+    getTodayPoints,
+    waterLogs,
+    foodLogs,
+    fitnessLogs,
+    habits,
+    habitLogs,
+    getTodayWater,
+    getTodayCalories,
+    getTodayFitness,
+    getWeekFitnessMinutes,
+    checkDailyCompletion
+  } = useWellnessData();
+
+  // Calculate achievement progress
+  const today = new Date().toISOString().split('T')[0];
+  const todayWaterLogs = waterLogs.filter(l => l.date === today).length;
+  const todayMealLogs = foodLogs.filter(l => l.date === today).length;
+  const todayFitnessLogs = fitnessLogs.filter(l => l.date === today).length;
+  const todayHabitsCompleted = habitLogs.filter(l => l.date === today).length;
+  
+  const allGoalsComplete = 
+    getTodayWater() >= profile.goals.waterGoal &&
+    todayMealLogs >= 3 &&
+    getTodayFitness() >= 30;
+
+  // Calculate current progress for achievements
+  const achievementsWithProgress = achievementDefinitions.map(a => {
+    let current = 0;
+    switch (a.id) {
+      case 'hydration_hero':
+      case 'water_week':
+        // Count consecutive days with water goal met (simplified)
+        current = profile.streak > 0 ? Math.min(profile.streak, a.requirement) : (getTodayWater() >= profile.goals.waterGoal ? 1 : 0);
+        break;
+      case 'meal_master':
+        current = foodLogs.length;
+        break;
+      case 'fitness_warrior':
+        current = getWeekFitnessMinutes();
+        break;
+      case 'streak_starter':
+        current = profile.streak;
+        break;
+      case 'perfect_day':
+        current = allGoalsComplete ? 1 : 0;
+        break;
+      case 'point_collector':
+        current = profile.totalPoints;
+        break;
+      case 'marathon':
+        current = fitnessLogs.length;
+        break;
+      default:
+        current = 0;
+    }
+    return { ...a, current };
+  });
 
   const handleUpdateProfile = () => {
     if (editName.trim()) {
@@ -192,31 +258,45 @@ export default function Profile({ onSignOut }: ProfileProps) {
         </div>
       </div>
 
-      {/* Achievements */}
-      <div className="px-4 sm:px-5 md:px-8">
-        <h2 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
-          <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
-          Achievements
-        </h2>
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          {achievements.map((achievement) => {
-            const isUnlocked = profile.achievements?.includes(achievement.id);
-            return (
-              <motion.div
-                key={achievement.id}
-                whileHover={{ scale: 1.02 }}
-                className={`p-2 sm:p-4 rounded-xl sm:rounded-2xl text-center transition-colors ${
-                  isUnlocked
-                    ? 'bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-800/20'
-                    : 'bg-muted/50 opacity-50'
-                }`}
-              >
-                <span className="text-xl sm:text-3xl">{achievement.icon}</span>
-                <p className="text-[10px] sm:text-xs font-medium mt-1 sm:mt-2 line-clamp-1">{achievement.name}</p>
-              </motion.div>
-            );
-          })}
-        </div>
+      {/* Gamification Section */}
+      <div className="px-4 sm:px-5 md:px-8 pb-6">
+        <Tabs defaultValue="achievements" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="achievements" className="text-xs sm:text-sm">
+              <Trophy className="w-3.5 h-3.5 mr-1" />
+              Achievements
+            </TabsTrigger>
+            <TabsTrigger value="rewards" className="text-xs sm:text-sm">
+              <Gift className="w-3.5 h-3.5 mr-1" />
+              Rewards
+            </TabsTrigger>
+            <TabsTrigger value="ranking" className="text-xs sm:text-sm">
+              <Crown className="w-3.5 h-3.5 mr-1" />
+              Ranking
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="achievements" className="mt-0">
+            <AchievementProgress 
+              achievements={achievementsWithProgress} 
+              unlockedIds={profile.achievements || []} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="rewards" className="mt-0">
+            <DailyRewards
+              waterLogs={todayWaterLogs}
+              mealLogs={todayMealLogs}
+              fitnessLogs={todayFitnessLogs}
+              habitsCompleted={todayHabitsCompleted}
+              allGoalsComplete={allGoalsComplete}
+            />
+          </TabsContent>
+          
+          <TabsContent value="ranking" className="mt-0">
+            <TierRanking totalPoints={profile.totalPoints} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit Profile Dialog */}
