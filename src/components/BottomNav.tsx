@@ -1,5 +1,5 @@
 import { NavLink } from '@/components/NavLink';
-import { Home, Droplets, Utensils, Dumbbell, Moon, User } from 'lucide-react';
+import { Home, Droplets, Utensils, Dumbbell, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -8,7 +8,6 @@ const navItems = [
   { to: '/water', icon: Droplets, label: 'Water' },
   { to: '/calories', icon: Utensils, label: 'Calories' },
   { to: '/fitness', icon: Dumbbell, label: 'Fitness' },
-  { to: '/sleep', icon: Moon, label: 'Sleep' },
   { to: '/profile', icon: User, label: 'Profile' },
 ];
 
