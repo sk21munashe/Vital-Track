@@ -37,6 +37,7 @@ export default function Dashboard({
   const {
     profile,
     habits,
+    habitLogs,
     waterLogs,
     foodLogs,
     fitnessLogs,
@@ -279,6 +280,7 @@ export default function Dashboard({
       {/* Custom Habits */}
       <HabitsSection
         habits={habits}
+        habitLogs={habitLogs}
         addHabit={addHabit}
         deleteHabit={deleteHabit}
         logHabit={logHabit}

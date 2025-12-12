@@ -152,12 +152,6 @@ export default function Profile({ onSignOut, displayName, cloudProfile, onUpdate
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-bold">Profile</h1>
           </div>
-          <button
-            onClick={onOpenSettings}
-            className="p-2 rounded-xl hover:bg-muted transition-colors"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
         </div>
       </header>
       
@@ -196,6 +190,12 @@ export default function Profile({ onSignOut, displayName, cloudProfile, onUpdate
               </div>
             </div>
           </div>
+          <button
+            onClick={onOpenSettings}
+            className="p-2.5 rounded-xl hover:bg-muted transition-colors self-start"
+          >
+            <Settings className="w-5 h-5 text-muted-foreground" />
+          </button>
         </div>
       </DashboardCard>
 
