@@ -287,15 +287,6 @@ export default function Dashboard({ displayName }: DashboardProps) {
       />
       </div>
 
-      {/* Floating Action Button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setShowQuickAdd(true)}
-        className="fixed bottom-20 sm:bottom-24 right-4 sm:right-5 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg flex items-center justify-center z-40"
-      >
-        <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
-      </motion.button>
 
       {/* Quick Add Dialog */}
       <Dialog open={showQuickAdd} onOpenChange={setShowQuickAdd}>
