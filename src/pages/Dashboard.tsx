@@ -9,6 +9,8 @@ import { StreakBadge } from '@/components/StreakBadge';
 import { PointsBadge } from '@/components/PointsBadge';
 import { DashboardCard } from '@/components/DashboardCard';
 import { HabitsSection } from '@/components/HabitsSection';
+import { ProgressCharts } from '@/components/ProgressCharts';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import { motivationalQuotes } from '@/data/foodDatabase';
 import { Button } from '@/components/ui/button';
@@ -27,6 +29,9 @@ export default function Dashboard() {
   const {
     profile,
     habits,
+    waterLogs,
+    foodLogs,
+    fitnessLogs,
     getTodayWater,
     getTodayCalories,
     getTodayFitness,
@@ -73,7 +78,10 @@ export default function Dashboard() {
               Hi, {profile.name.split(' ')[0]}! 👋
             </h1>
           </div>
-          {profile.streak > 0 && <StreakBadge streak={profile.streak} />}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {profile.streak > 0 && <StreakBadge streak={profile.streak} />}
+          </div>
         </motion.div>
       </header>
 
@@ -217,6 +225,15 @@ export default function Dashboard() {
         deleteHabit={deleteHabit}
         logHabit={logHabit}
         getTodayHabitProgress={getTodayHabitProgress}
+      />
+
+      {/* Progress Charts */}
+      <ProgressCharts
+        waterLogs={waterLogs}
+        foodLogs={foodLogs}
+        fitnessLogs={fitnessLogs}
+        waterGoal={profile.goals.waterGoal}
+        calorieGoal={profile.goals.calorieGoal}
       />
 
       {/* Floating Action Button */}
