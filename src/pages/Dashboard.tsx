@@ -105,9 +105,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background pb-4 overflow-y-auto relative">
-      {/* Header */}
-      <header className="pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-5 md:px-8">
+    <div className="h-full flex flex-col bg-background">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/50 pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-5 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -127,6 +127,9 @@ export default function Dashboard() {
           </div>
         </motion.div>
       </header>
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto pb-4">
 
       {/* Motivational Quote */}
       <motion.div
@@ -278,6 +281,7 @@ export default function Dashboard() {
         waterGoal={profile.goals.waterGoal}
         calorieGoal={profile.goals.calorieGoal}
       />
+      </div>
 
       {/* Floating Action Button */}
       <motion.button

@@ -76,9 +76,9 @@ export default function WaterTracker() {
   const maxAmount = Math.max(...weekData.map(d => d.amount), profile.goals.waterGoal);
 
   return (
-    <div className="h-full flex flex-col bg-background pb-4 overflow-y-auto">
-      {/* Header */}
-      <header className="pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-5 md:px-8">
+    <div className="h-full flex flex-col bg-background">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/50 pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-5 md:px-8">
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate('/')}
@@ -98,6 +98,9 @@ export default function WaterTracker() {
           </button>
         </div>
       </header>
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto pb-4">
 
       {/* Water Summary Card with Progress */}
       <div className="px-4 sm:px-5 md:px-8 mb-4">
@@ -246,6 +249,7 @@ export default function WaterTracker() {
           <p className="text-center text-muted-foreground py-4 text-sm">No water logged today yet</p>
         )}
       </DashboardCard>
+      </div>
 
       {/* Custom Amount Dialog */}
       <Dialog open={showCustomAmount} onOpenChange={setShowCustomAmount}>

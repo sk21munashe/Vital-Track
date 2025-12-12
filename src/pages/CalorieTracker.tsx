@@ -143,9 +143,9 @@ export default function CalorieTracker() {
   }, {} as Record<string, FoodLog[]>);
 
   return (
-    <div className="h-full flex flex-col bg-background pb-4 overflow-y-auto">
-      {/* Header */}
-      <header className="pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-5 md:px-8">
+    <div className="h-full flex flex-col bg-background">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/50 pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-5 md:px-8">
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate('/')}
@@ -165,6 +165,9 @@ export default function CalorieTracker() {
           </button>
         </div>
       </header>
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto pb-4">
 
       {/* Summary Card */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6 glass-nutrition">
@@ -265,8 +268,7 @@ export default function CalorieTracker() {
           );
         })}
       </div>
-
-      {/* Add Food Dialog */}
+      </div>
       <Dialog open={showAddFood} onOpenChange={setShowAddFood}>
         <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
