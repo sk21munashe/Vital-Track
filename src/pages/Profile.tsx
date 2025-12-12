@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Target, Trophy, Star, Flame, Droplets, Utensils, Dumbbell, Edit2, Gift, Crown, Settings } from 'lucide-react';
+import { ChevronLeft, Target, Trophy, Star, Flame, Droplets, Utensils, Dumbbell, Edit2, LogOut, Gift, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardCard } from '@/components/DashboardCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
@@ -27,7 +27,6 @@ interface ProfileProps {
   cloudProfile?: CloudUserProfile | null;
   onUpdatePreferredName?: (name: string) => Promise<{ error: Error | null }>;
   onUpdateAvatar?: (type: string, value: string) => Promise<{ error: Error | null }>;
-  onOpenSettings?: () => void;
 }
 
 const achievementDefinitions = [
@@ -41,7 +40,7 @@ const achievementDefinitions = [
   { id: 'marathon', name: 'Marathon Month', description: 'Log 30 workouts in a month', icon: '🏃', category: 'fitness' as const, requirement: 30 },
 ];
 
-export default function Profile({ onSignOut, displayName, cloudProfile, onUpdatePreferredName, onUpdateAvatar, onOpenSettings }: ProfileProps) {
+export default function Profile({ onSignOut, displayName, cloudProfile, onUpdatePreferredName, onUpdateAvatar }: ProfileProps) {
   const navigate = useNavigate();
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showEditGoals, setShowEditGoals] = useState(false);
@@ -152,6 +151,12 @@ export default function Profile({ onSignOut, displayName, cloudProfile, onUpdate
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-bold">Profile</h1>
           </div>
+          {onSignOut && (
+            <Button variant="ghost" size="sm" onClick={onSignOut} className="text-destructive hover:text-destructive">
+              <LogOut className="w-4 h-4 mr-1" />
+              Sign Out
+            </Button>
+          )}
         </div>
       </header>
       
@@ -190,12 +195,6 @@ export default function Profile({ onSignOut, displayName, cloudProfile, onUpdate
               </div>
             </div>
           </div>
-          <button
-            onClick={onOpenSettings}
-            className="p-2.5 rounded-xl hover:bg-muted transition-colors self-start"
-          >
-            <Settings className="w-5 h-5 text-muted-foreground" />
-          </button>
         </div>
       </DashboardCard>
 

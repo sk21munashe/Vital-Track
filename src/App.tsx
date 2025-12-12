@@ -21,11 +21,7 @@ const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
   const [showSplash, setShowSplash] = useState(true);
-  const [showSettings, setShowSettings] = useState(false);
   const { signOut, displayName, profile, updatePreferredName, updateAvatar } = useAuth();
-  
-  // Lazy load SettingsPanel
-  const SettingsPanel = require('./components/SettingsPanel').SettingsPanel;
 
   return (
     <>
@@ -39,6 +35,10 @@ const AuthenticatedApp = () => {
                 element={
                   <Index 
                     displayName={displayName}
+                    onSignOut={signOut}
+                    cloudProfile={profile}
+                    onUpdatePreferredName={updatePreferredName}
+                    onUpdateAvatar={updateAvatar}
                   />
                 } 
               />
@@ -55,7 +55,6 @@ const AuthenticatedApp = () => {
                     cloudProfile={profile}
                     onUpdatePreferredName={updatePreferredName}
                     onUpdateAvatar={updateAvatar}
-                    onOpenSettings={() => setShowSettings(true)}
                   />
                 } 
               />
@@ -64,17 +63,6 @@ const AuthenticatedApp = () => {
           </main>
           <BottomNav />
         </div>
-        
-        {/* Settings Panel - rendered at app level */}
-        <SettingsPanel 
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-          onSignOut={signOut}
-          displayName={displayName}
-          cloudProfile={profile}
-          onUpdatePreferredName={updatePreferredName}
-          onUpdateAvatar={updateAvatar}
-        />
       </HashRouter>
     </>
   );
