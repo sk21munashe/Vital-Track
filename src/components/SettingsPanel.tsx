@@ -101,7 +101,7 @@ export function SettingsPanel({
         <Menu className="w-5 h-5" />
       </button>
 
-      {/* Overlay */}
+      {/* Full-screen Overlay with Blur */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -110,32 +110,33 @@ export function SettingsPanel({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+              className="fixed inset-0 bg-background/60 backdrop-blur-md z-50"
             />
             
-            {/* Settings Panel */}
+            {/* Full-screen Settings Panel */}
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-sm bg-card border-l border-border shadow-lg z-50 overflow-y-auto"
+              className="fixed inset-0 z-50 flex flex-col"
             >
               {/* Header */}
-              <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-border p-4 flex items-center justify-between">
+              <div className="flex-shrink-0 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Settings className="w-5 h-5 text-primary" />
                   <h2 className="text-lg font-semibold">Settings</h2>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-xl hover:bg-muted transition-colors"
+                  className="p-2 rounded-xl bg-card/80 hover:bg-card transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="p-4 space-y-6">
+              <div className="flex-1 overflow-y-auto px-4 pb-8">
+                <div className="max-w-sm mx-auto space-y-6">
                 {/* User Profile Section */}
                 <section>
                   <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
@@ -289,6 +290,7 @@ export function SettingsPanel({
                     Sign Out
                   </Button>
                 )}
+                </div>
               </div>
             </motion.div>
           </>

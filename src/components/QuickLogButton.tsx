@@ -5,7 +5,7 @@ import { LucideIcon } from 'lucide-react';
 interface QuickLogButtonProps {
   icon: LucideIcon;
   label: string;
-  variant: 'water' | 'nutrition' | 'fitness';
+  variant: 'water' | 'nutrition' | 'fitness' | 'sleep';
   onClick: () => void;
   className?: string;
 }
@@ -25,6 +25,11 @@ const variantStyles = {
     bg: 'bg-fitness-light hover:bg-fitness/20',
     icon: 'text-fitness',
     shadow: 'hover:shadow-fitness',
+  },
+  sleep: {
+    bg: 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50',
+    icon: 'text-purple-600 dark:text-purple-400',
+    shadow: 'hover:shadow-purple-500/20',
   },
 };
 

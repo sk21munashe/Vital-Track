@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { Droplets, Utensils, Dumbbell, Plus, Sparkles } from 'lucide-react';
+import { Droplets, Utensils, Dumbbell, Moon, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ProgressRing';
 import { QuickLogButton } from '@/components/QuickLogButton';
@@ -235,10 +235,10 @@ export default function Dashboard({
       {/* Quick Log Section */}
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
         <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Quick Log</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <QuickLogButton
             icon={Droplets}
-            label="Log Water Intake"
+            label="Log Water"
             variant="water"
             onClick={() => setShowQuickAdd(true)}
           />
@@ -253,6 +253,12 @@ export default function Dashboard({
             label="Log Workout"
             variant="fitness"
             onClick={() => navigate('/fitness')}
+          />
+          <QuickLogButton
+            icon={Moon}
+            label="Log Sleep"
+            variant="sleep"
+            onClick={() => navigate('/sleep')}
           />
         </div>
       </div>

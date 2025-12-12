@@ -10,6 +10,7 @@ import WaterTracker from "./pages/WaterTracker";
 import CalorieTracker from "./pages/CalorieTracker";
 import FitnessTracker from "./pages/FitnessTracker";
 import SleepTracker from "./pages/SleepTracker";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import { BottomNav } from "./components/BottomNav";
@@ -45,6 +46,18 @@ const AuthenticatedApp = () => {
               <Route path="/calories" element={<CalorieTracker />} />
               <Route path="/fitness" element={<FitnessTracker />} />
               <Route path="/sleep" element={<SleepTracker />} />
+              <Route 
+                path="/profile" 
+                element={
+                  <Profile 
+                    displayName={displayName}
+                    onSignOut={signOut}
+                    cloudProfile={profile}
+                    onUpdatePreferredName={updatePreferredName}
+                    onUpdateAvatar={updateAvatar}
+                  />
+                } 
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
