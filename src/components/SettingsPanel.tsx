@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
+  Menu, 
   X, 
   User, 
   Sun, 
@@ -11,6 +12,7 @@ import {
   Info, 
   LogOut,
   Settings,
+  ChevronRight,
   Edit2
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -31,8 +33,6 @@ import { toast } from 'sonner';
 import { UserProfile as CloudUserProfile } from '@/hooks/useAuth';
 
 interface SettingsPanelProps {
-  isOpen: boolean;
-  onClose: () => void;
   onSignOut?: () => void;
   displayName?: string;
   cloudProfile?: CloudUserProfile | null;
@@ -41,14 +41,13 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ 
-  isOpen,
-  onClose,
   onSignOut, 
   displayName,
   cloudProfile,
   onUpdatePreferredName,
   onUpdateAvatar
 }: SettingsPanelProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editName, setEditName] = useState('');
   const { theme, setTheme } = useTheme();
@@ -93,6 +92,15 @@ export function SettingsPanel({
 
   return (
     <>
+      {/* Hamburger Menu Button */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="p-2 rounded-xl hover:bg-muted transition-colors"
+        aria-label="Open settings menu"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
       {/* Full-screen Overlay with Blur */}
       <AnimatePresence>
         {isOpen && (
@@ -101,7 +109,7 @@ export function SettingsPanel({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={onClose}
+              onClick={() => setIsOpen(false)}
               className="fixed inset-0 bg-background/60 backdrop-blur-md z-50"
             />
             
@@ -120,7 +128,7 @@ export function SettingsPanel({
                   <h2 className="text-lg font-semibold">Settings</h2>
                 </div>
                 <button
-                  onClick={onClose}
+                  onClick={() => setIsOpen(false)}
                   className="p-2 rounded-xl bg-card/80 hover:bg-card transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -274,7 +282,7 @@ export function SettingsPanel({
                     variant="destructive" 
                     className="w-full" 
                     onClick={() => {
-                      onClose();
+                      setIsOpen(false);
                       onSignOut();
                     }}
                   >

@@ -10,7 +10,7 @@ import { PointsBadge } from '@/components/PointsBadge';
 import { DashboardCard } from '@/components/DashboardCard';
 import { HabitsSection } from '@/components/HabitsSection';
 import { ProgressCharts } from '@/components/ProgressCharts';
-
+import { SettingsPanel } from '@/components/SettingsPanel';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import { useNotifications } from '@/hooks/useNotifications';
 import { motivationalQuotes } from '@/data/foodDatabase';
@@ -25,10 +25,18 @@ import { UserProfile as CloudUserProfile } from '@/hooks/useAuth';
 
 interface DashboardProps {
   displayName?: string;
+  onSignOut?: () => void;
+  cloudProfile?: CloudUserProfile | null;
+  onUpdatePreferredName?: (name: string) => Promise<{ error: Error | null }>;
+  onUpdateAvatar?: (type: string, value: string) => Promise<{ error: Error | null }>;
 }
 
 export default function Dashboard({ 
-  displayName
+  displayName, 
+  onSignOut,
+  cloudProfile,
+  onUpdatePreferredName,
+  onUpdateAvatar
 }: DashboardProps) {
   const navigate = useNavigate();
   const [quote, setQuote] = useState('');
@@ -129,6 +137,13 @@ export default function Dashboard({
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <SettingsPanel 
+              onSignOut={onSignOut}
+              displayName={displayName}
+              cloudProfile={cloudProfile}
+              onUpdatePreferredName={onUpdatePreferredName}
+              onUpdateAvatar={onUpdateAvatar}
+            />
             {profile.streak > 0 && <StreakBadge streak={profile.streak} />}
           </div>
         </motion.div>
