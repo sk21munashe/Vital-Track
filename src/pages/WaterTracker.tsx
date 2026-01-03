@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Droplets, Plus, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +22,24 @@ export default function WaterTracker() {
   const [customGoal, setCustomGoal] = useState('');
   const [showCustomAmount, setShowCustomAmount] = useState(false);
   const [customAmount, setCustomAmount] = useState('');
+  const [isHeaderSticky, setIsHeaderSticky] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Sticky header observer
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsHeaderSticky(!entry.isIntersecting);
+      },
+      { threshold: 0, rootMargin: '-1px 0px 0px 0px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
 
   const {
     profile,
@@ -76,9 +94,16 @@ export default function WaterTracker() {
   const maxAmount = Math.max(...weekData.map(d => d.amount), profile.goals.waterGoal);
 
   return (
-    <div className="h-full flex flex-col bg-background pb-4 overflow-y-auto">
-      {/* Header */}
-      <header className="pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-5 md:px-8">
+    <div className="h-full flex flex-col bg-background pb-4 overflow-y-auto relative">
+      {/* Sentinel for sticky detection */}
+      <div ref={sentinelRef} className="h-0 w-full" />
+      
+      {/* Sticky Header */}
+      <header className={`pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-5 md:px-8 bg-background transition-all duration-300 ${
+        isHeaderSticky 
+          ? 'sticky top-0 z-50 shadow-md border-b border-border/50 backdrop-blur-sm bg-background/95' 
+          : ''
+      }`}>
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate('/')}

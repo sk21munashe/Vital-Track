@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, subDays } from 'date-fns';
-import { Droplets, Utensils, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Droplets, Utensils, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ProgressRing';
 import { QuickLogButton } from '@/components/QuickLogButton';
@@ -37,6 +37,7 @@ export default function Dashboard() {
     foodLogs,
     getTodayWater,
     getTodayCalories,
+    getTodayMeals,
     getTodayPoints,
     addWater,
   } = useWellnessData();
@@ -93,6 +94,14 @@ export default function Dashboard() {
   const todayWater = getTodayWater();
   const todayCalories = getTodayCalories();
   const todayPoints = getTodayPoints();
+  const todayMeals = getTodayMeals();
+
+  // Count unique meal types logged today (breakfast, lunch, dinner)
+  const getTodayMealsLogged = useCallback(() => {
+    const mealTypes = new Set(todayMeals.map(meal => meal.mealType));
+    // Only count main meals (breakfast, lunch, dinner), not snacks
+    return ['breakfast', 'lunch', 'dinner'].filter(type => mealTypes.has(type as any)).length;
+  }, [todayMeals]);
 
   const displayWater = getWaterForDay(selectedDay);
   const displayCalories = getCaloriesForDay(selectedDay);
@@ -274,7 +283,20 @@ export default function Dashboard() {
 
       {/* Daily Challenges */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6" delay={0.3}>
-        <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Daily Challenges</h2>
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h2 className="text-base sm:text-lg font-semibold">Daily Challenges</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              // Force re-render by triggering a state update
+              setSelectedDay('today');
+            }}
+            className="h-8 w-8 p-0"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
         <div className="space-y-3">
           <ChallengeItem
             title="Drink 8 glasses of water"
@@ -285,9 +307,9 @@ export default function Dashboard() {
           />
           <ChallengeItem
             title="Log all 3 meals"
-            progress={Math.min(3, 3)}
+            progress={getTodayMealsLogged()}
             total={3}
-            completed={false}
+            completed={getTodayMealsLogged() >= 3}
             color="nutrition"
           />
         </div>
