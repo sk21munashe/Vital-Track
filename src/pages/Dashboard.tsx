@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { Droplets, Utensils, Dumbbell, Plus, Sparkles } from 'lucide-react';
+import { Droplets, Utensils, Dumbbell, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ProgressRing';
 import { QuickLogButton } from '@/components/QuickLogButton';
@@ -11,7 +11,9 @@ import { DashboardCard } from '@/components/DashboardCard';
 import { HabitsSection } from '@/components/HabitsSection';
 import { ProgressCharts } from '@/components/ProgressCharts';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { AIPlanCard } from '@/components/AIPlanCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
+import { useHealthCoach } from '@/hooks/useHealthCoach';
 import { motivationalQuotes } from '@/data/foodDatabase';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,9 +45,23 @@ export default function Dashboard() {
     getTodayHabitProgress,
   } = useWellnessData();
 
+  const {
+    healthProfile,
+    healthPlan,
+    isLoading: isGenerating,
+    generatePlan,
+    saveProfile,
+  } = useHealthCoach();
+
   useEffect(() => {
     setQuote(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
   }, []);
+
+  const handleGeneratePlan = async () => {
+    if (healthProfile) {
+      await generatePlan(healthProfile);
+    }
+  };
 
   const todayWater = getTodayWater();
   const todayCalories = getTodayCalories();
@@ -54,7 +70,7 @@ export default function Dashboard() {
 
   const waterProgress = (todayWater / profile.goals.waterGoal) * 100;
   const caloriesProgress = (todayCalories / profile.goals.calorieGoal) * 100;
-  const fitnessProgress = (todayFitness / 30) * 100; // 30 min daily goal
+  const fitnessProgress = (todayFitness / 30) * 100;
 
   const handleQuickWater = (amount: number) => {
     addWater(amount);
@@ -85,18 +101,13 @@ export default function Dashboard() {
         </motion.div>
       </header>
 
-      {/* Motivational Quote */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6"
-      >
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0" />
-          <p className="text-xs sm:text-sm italic line-clamp-2">{quote}</p>
-        </div>
-      </motion.div>
+      {/* AI Plan Card */}
+      <AIPlanCard
+        plan={healthPlan}
+        profile={healthProfile}
+        isLoading={isGenerating}
+        onGeneratePlan={handleGeneratePlan}
+      />
 
       {/* Progress Rings */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6" delay={0.1}>
@@ -168,22 +179,22 @@ export default function Dashboard() {
       {/* Quick Log Section */}
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
         <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Quick Log</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <QuickLogButton
             icon={Droplets}
-            label="Log Water Intake"
+            label="Water"
             variant="water"
             onClick={() => setShowQuickAdd(true)}
           />
           <QuickLogButton
             icon={Utensils}
-            label="Log Meal"
+            label="Meal"
             variant="nutrition"
             onClick={() => navigate('/calories')}
           />
           <QuickLogButton
             icon={Dumbbell}
-            label="Log Workout"
+            label="Workout"
             variant="fitness"
             onClick={() => navigate('/fitness')}
           />
@@ -203,7 +214,7 @@ export default function Dashboard() {
           />
           <ChallengeItem
             title="Log all 3 meals"
-            progress={Math.min(3, 3)} // Would need meal type tracking
+            progress={Math.min(3, 3)}
             total={3}
             completed={false}
             color="nutrition"

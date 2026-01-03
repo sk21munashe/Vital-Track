@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, User, Target, Trophy, Star, Flame, Droplets, Utensils, Dumbbell, Edit2 } from 'lucide-react';
+import { ChevronLeft, User, Target, Trophy, Star, Flame, Droplets, Utensils, Dumbbell, Edit2, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardCard } from '@/components/DashboardCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const achievements = [
   { id: 'hydration_hero', name: 'Hydration Hero', description: 'Drink 2L of water for 7 days', icon: '💧', category: 'water' },
@@ -49,6 +50,12 @@ export default function Profile() {
     updateGoals({ waterGoal: water, calorieGoal: calories, fitnessGoal: fitness });
     setShowEditGoals(false);
     toast.success('Goals updated!');
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+    toast.success('Logged out successfully');
   };
 
   return (
@@ -207,6 +214,18 @@ export default function Profile() {
             );
           })}
         </div>
+      </div>
+
+      {/* Logout Button */}
+      <div className="px-4 sm:px-5 md:px-8 mt-6 mb-4">
+        <Button
+          variant="outline"
+          onClick={handleLogout}
+          className="w-full text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign Out
+        </Button>
       </div>
 
       {/* Edit Profile Dialog */}
