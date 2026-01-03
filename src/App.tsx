@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import WaterTracker from "./pages/WaterTracker";
 import CalorieTracker from "./pages/CalorieTracker";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { BottomNav } from "./components/BottomNav";
@@ -67,6 +68,7 @@ const App = () => {
                           <Route path="/water" element={<WaterTracker />} />
                           <Route path="/calories" element={<CalorieTracker />} />
                           <Route path="/profile" element={<Profile />} />
+                          <Route path="/settings" element={<Settings />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </main>
