@@ -160,6 +160,16 @@ export function useWellnessData() {
     addPoints(5);
   }, []);
 
+  const updateFood = useCallback((logId: string, foodItem: FoodItem) => {
+    setFoodLogs(prev => prev.map(log => 
+      log.id === logId ? { ...log, foodItem } : log
+    ));
+  }, []);
+
+  const deleteFood = useCallback((logId: string) => {
+    setFoodLogs(prev => prev.filter(log => log.id !== logId));
+  }, []);
+
   const getTodayCalories = useCallback(() => {
     return foodLogs
       .filter(log => log.date === today())
@@ -318,6 +328,8 @@ export function useWellnessData() {
 
     // Food
     addFood,
+    updateFood,
+    deleteFood,
     getTodayCalories,
     getTodayMeals,
     getWeekFood,

@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { ChevronLeft, Utensils, Plus, Search, Calculator, Apple, Coffee, Moon, Cookie } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, Utensils, Plus, Search, Calculator, Apple, Coffee, Moon, Cookie, Camera, ChevronDown, ChevronUp, Pencil, Trash2, Loader2, X, Target, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { DashboardCard } from '@/components/DashboardCard';
@@ -26,6 +26,12 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 const mealTypes = [
   { id: 'breakfast', label: 'Breakfast', icon: Coffee, time: 'Morning' },
@@ -34,15 +40,48 @@ const mealTypes = [
   { id: 'snack', label: 'Snack', icon: Cookie, time: 'Anytime' },
 ] as const;
 
+interface AnalyzedFood {
+  name: string;
+  portion: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+interface FoodAnalysisResult {
+  foods: AnalyzedFood[];
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+  confidence: 'high' | 'medium' | 'low';
+  notes?: string;
+}
+
 export default function CalorieTracker() {
   const navigate = useNavigate();
   const [showAddFood, setShowAddFood] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [showMacroGoals, setShowMacroGoals] = useState(false);
+  const [showFoodScanner, setShowFoodScanner] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<FoodLog['mealType']>('breakfast');
   const [searchQuery, setSearchQuery] = useState('');
   const [customFood, setCustomFood] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '' });
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Expandable meal states
+  const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>({});
+  
+  // Edit food state
+  const [editingFood, setEditingFood] = useState<{ logId: string; food: FoodItem } | null>(null);
+  
+  // AI Scanner state
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<FoodAnalysisResult | null>(null);
+  const [editableAnalysis, setEditableAnalysis] = useState<AnalyzedFood[]>([]);
 
   // Calculator state
   const [calcData, setCalcData] = useState({
@@ -54,6 +93,9 @@ export default function CalorieTracker() {
     goal: 'maintain' as 'maintain' | 'lose' | 'gain',
   });
   const [calcResult, setCalcResult] = useState<number | null>(null);
+  
+  // Macro goals state
+  const [macroGoals, setMacroGoals] = useState({ protein: '', carbs: '', fat: '' });
 
   // Sticky header observer
   useEffect(() => {
@@ -76,12 +118,32 @@ export default function CalorieTracker() {
     getTodayCalories,
     getTodayMeals,
     addFood,
+    updateFood,
+    deleteFood,
     updateGoals,
   } = useWellnessData();
 
   const todayCalories = getTodayCalories();
   const todayMeals = getTodayMeals();
   const caloriesRemaining = profile.goals.calorieGoal - todayCalories;
+  
+  // Calculate today's macros
+  const todayMacros = todayMeals.reduce((acc, meal) => ({
+    protein: acc.protein + (meal.foodItem.protein || 0),
+    carbs: acc.carbs + (meal.foodItem.carbs || 0),
+    fat: acc.fat + (meal.foodItem.fat || 0),
+  }), { protein: 0, carbs: 0, fat: 0 });
+
+  // Initialize macro goals from profile
+  useEffect(() => {
+    if (profile.goals.macros) {
+      setMacroGoals({
+        protein: profile.goals.macros.protein?.toString() || '',
+        carbs: profile.goals.macros.carbs?.toString() || '',
+        fat: profile.goals.macros.fat?.toString() || '',
+      });
+    }
+  }, [profile.goals.macros]);
 
   const filteredFoods = commonFoods.filter(food =>
     food.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -110,6 +172,111 @@ export default function CalorieTracker() {
 
     handleAddFood(food);
     setCustomFood({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+  };
+
+  const handleUpdateFood = () => {
+    if (!editingFood) return;
+    updateFood(editingFood.logId, editingFood.food);
+    toast.success('Food updated!');
+    setEditingFood(null);
+  };
+
+  const handleDeleteFood = (logId: string, foodName: string) => {
+    deleteFood(logId);
+    toast.success(`Removed ${foodName}`);
+  };
+
+  const toggleMealExpanded = (mealId: string) => {
+    setExpandedMeals(prev => ({ ...prev, [mealId]: !prev[mealId] }));
+  };
+
+  // AI Food Scanner
+  const handleCameraClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setShowFoodScanner(true);
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+    setEditableAnalysis([]);
+
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('analyze-food', {
+            body: { imageBase64: base64 }
+          });
+
+          if (error) {
+            console.error('Analysis error:', error);
+            toast.error('Failed to analyze food. Please try again.');
+            setShowFoodScanner(false);
+            return;
+          }
+
+          if (data.error) {
+            toast.error(data.error);
+            setShowFoodScanner(false);
+            return;
+          }
+
+          setAnalysisResult(data);
+          setEditableAnalysis(data.foods || []);
+        } catch (err) {
+          console.error('Error calling analyze-food:', err);
+          toast.error('Failed to analyze food. Please try again.');
+          setShowFoodScanner(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsAnalyzing(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const updateEditableFood = (index: number, field: keyof AnalyzedFood, value: string | number) => {
+    setEditableAnalysis(prev => prev.map((food, i) => 
+      i === index ? { ...food, [field]: typeof food[field] === 'number' ? Number(value) : value } : food
+    ));
+  };
+
+  const removeAnalyzedFood = (index: number) => {
+    setEditableAnalysis(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addAnalyzedFoodsToMeal = () => {
+    editableAnalysis.forEach(food => {
+      const foodItem: FoodItem = {
+        id: `ai-${Date.now()}-${Math.random()}`,
+        name: food.name,
+        calories: food.calories,
+        protein: food.protein,
+        carbs: food.carbs,
+        fat: food.fat,
+        servingSize: food.portion,
+      };
+      addFood(selectedMealType, foodItem);
+    });
+    
+    toast.success(`Added ${editableAnalysis.length} item(s) to ${selectedMealType}!`, {
+      description: `+${editableAnalysis.length * 5} points earned`,
+    });
+    
+    setShowFoodScanner(false);
+    setAnalysisResult(null);
+    setEditableAnalysis([]);
   };
 
   const calculateBMR = () => {
@@ -153,6 +320,18 @@ export default function CalorieTracker() {
     }
   };
 
+  const handleSaveMacroGoals = () => {
+    updateGoals({
+      macros: {
+        protein: macroGoals.protein ? parseInt(macroGoals.protein) : undefined,
+        carbs: macroGoals.carbs ? parseInt(macroGoals.carbs) : undefined,
+        fat: macroGoals.fat ? parseInt(macroGoals.fat) : undefined,
+      }
+    });
+    setShowMacroGoals(false);
+    toast.success('Macro goals updated!');
+  };
+
   // Group today's meals by type
   const mealsByType = todayMeals.reduce((acc, meal) => {
     if (!acc[meal.mealType]) acc[meal.mealType] = [];
@@ -162,6 +341,16 @@ export default function CalorieTracker() {
 
   return (
     <div className="h-full flex flex-col bg-background pb-4 overflow-y-auto relative">
+      {/* Hidden file input for camera */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleImageCapture}
+      />
+      
       {/* Sentinel for sticky detection */}
       <div ref={sentinelRef} className="h-0 w-full" />
       
@@ -182,6 +371,13 @@ export default function CalorieTracker() {
             <h1 className="text-xl sm:text-2xl font-bold text-gradient-nutrition truncate">Calorie Tracker</h1>
             <p className="text-xs sm:text-sm text-muted-foreground">Fuel your body right</p>
           </div>
+          <button
+            onClick={() => setShowMacroGoals(true)}
+            className="p-2 rounded-xl hover:bg-muted transition-colors flex-shrink-0"
+            title="Set Macro Goals"
+          >
+            <Target className="w-5 h-5 text-nutrition" />
+          </button>
           <button
             onClick={() => setShowCalculator(true)}
             className="p-2 rounded-xl hover:bg-muted transition-colors flex-shrink-0"
@@ -221,6 +417,36 @@ export default function CalorieTracker() {
             />
           </div>
         </div>
+        
+        {/* Macro Summary */}
+        {(profile.goals.macros?.protein || profile.goals.macros?.carbs || profile.goals.macros?.fat) && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <p className="text-xs text-muted-foreground mb-2">Today's Macros</p>
+            <div className="grid grid-cols-3 gap-2">
+              {profile.goals.macros?.protein && (
+                <div className="text-center p-2 rounded-lg bg-blue-500/10">
+                  <p className="text-xs text-muted-foreground">Protein</p>
+                  <p className="font-semibold text-blue-500">{todayMacros.protein}g</p>
+                  <p className="text-xs text-muted-foreground">/ {profile.goals.macros.protein}g</p>
+                </div>
+              )}
+              {profile.goals.macros?.carbs && (
+                <div className="text-center p-2 rounded-lg bg-amber-500/10">
+                  <p className="text-xs text-muted-foreground">Carbs</p>
+                  <p className="font-semibold text-amber-500">{todayMacros.carbs}g</p>
+                  <p className="text-xs text-muted-foreground">/ {profile.goals.macros.carbs}g</p>
+                </div>
+              )}
+              {profile.goals.macros?.fat && (
+                <div className="text-center p-2 rounded-lg bg-rose-500/10">
+                  <p className="text-xs text-muted-foreground">Fat</p>
+                  <p className="font-semibold text-rose-500">{todayMacros.fat}g</p>
+                  <p className="text-xs text-muted-foreground">/ {profile.goals.macros.fat}g</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </DashboardCard>
 
       {/* Meal Type Buttons */}
@@ -228,6 +454,13 @@ export default function CalorieTracker() {
         <h2 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
           <Utensils className="w-5 h-5 text-nutrition" />
           Log a Meal
+          <button
+            onClick={handleCameraClick}
+            className="ml-auto p-2 rounded-xl bg-nutrition/20 hover:bg-nutrition/30 transition-colors"
+            title="Scan Food with AI"
+          >
+            <Camera className="w-5 h-5 text-nutrition" />
+          </button>
         </h2>
         <div className="grid grid-cols-4 gap-2">
           {mealTypes.map(({ id, label, icon: Icon }) => (
@@ -254,39 +487,103 @@ export default function CalorieTracker() {
         {mealTypes.map(({ id, label, icon: Icon }) => {
           const meals = mealsByType[id] || [];
           const totalCalories = meals.reduce((sum, m) => sum + m.foodItem.calories, 0);
+          const isExpanded = expandedMeals[id] ?? false;
           
           return (
-            <DashboardCard key={id} className="mb-3" delay={0.1}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-nutrition-light flex items-center justify-center">
-                    <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-nutrition" />
-                  </div>
-                  <span className="text-sm sm:text-base font-medium">{label}</span>
-                </div>
-                <span className="text-xs sm:text-sm font-semibold text-nutrition">{totalCalories} cal</span>
-              </div>
-              {meals.length > 0 ? (
-                <div className="space-y-2 mt-3">
-                  {meals.map((meal) => (
-                    <div key={meal.id} className="flex items-center justify-between text-xs sm:text-sm py-1 border-b border-border/50 last:border-0">
-                      <span className="text-muted-foreground truncate mr-2">{meal.foodItem.name}</span>
-                      <span className="flex-shrink-0">{meal.foodItem.calories} cal</span>
+            <Collapsible key={id} open={isExpanded} onOpenChange={() => toggleMealExpanded(id)}>
+              <DashboardCard className="mb-3" delay={0.1}>
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-nutrition-light flex items-center justify-center">
+                        <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-nutrition" />
+                      </div>
+                      <span className="text-sm sm:text-base font-medium">{label}</span>
+                      <span className="text-xs text-muted-foreground">({meals.length} items)</span>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <button
-                  onClick={() => {
-                    setSelectedMealType(id as FoodLog['mealType']);
-                    setShowAddFood(true);
-                  }}
-                  className="w-full py-2 text-xs sm:text-sm text-muted-foreground hover:text-nutrition transition-colors"
-                >
-                  + Add {label.toLowerCase()}
-                </button>
-              )}
-            </DashboardCard>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs sm:text-sm font-semibold text-nutrition">{totalCalories} cal</span>
+                      {meals.length > 0 && (
+                        isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent>
+                  <AnimatePresence>
+                    {meals.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="space-y-2 mt-3 pt-3 border-t border-border/50"
+                      >
+                        {meals.map((meal) => (
+                          <motion.div 
+                            key={meal.id} 
+                            layout
+                            className="flex items-center justify-between text-xs sm:text-sm py-2 px-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <span className="font-medium truncate block">{meal.foodItem.name}</span>
+                              <span className="text-muted-foreground text-xs">
+                                {meal.foodItem.calories} cal
+                                {meal.foodItem.protein !== undefined && ` • P: ${meal.foodItem.protein}g`}
+                                {meal.foodItem.carbs !== undefined && ` • C: ${meal.foodItem.carbs}g`}
+                                {meal.foodItem.fat !== undefined && ` • F: ${meal.foodItem.fat}g`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 ml-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingFood({ logId: meal.id, food: { ...meal.foodItem } });
+                                }}
+                                className="p-1.5 rounded-lg hover:bg-nutrition/20 transition-colors"
+                              >
+                                <Pencil className="w-3.5 h-3.5 text-nutrition" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteFood(meal.id, meal.foodItem.name);
+                                }}
+                                className="p-1.5 rounded-lg hover:bg-destructive/20 transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                              </button>
+                            </div>
+                          </motion.div>
+                        ))}
+                        <button
+                          onClick={() => {
+                            setSelectedMealType(id as FoodLog['mealType']);
+                            setShowAddFood(true);
+                          }}
+                          className="w-full py-2 text-xs text-nutrition hover:text-nutrition-dark transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Add more
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </CollapsibleContent>
+                
+                {meals.length === 0 && (
+                  <button
+                    onClick={() => {
+                      setSelectedMealType(id as FoodLog['mealType']);
+                      setShowAddFood(true);
+                    }}
+                    className="w-full py-2 mt-2 text-xs sm:text-sm text-muted-foreground hover:text-nutrition transition-colors"
+                  >
+                    + Add {label.toLowerCase()}
+                  </button>
+                )}
+              </DashboardCard>
+            </Collapsible>
           );
         })}
       </div>
@@ -302,9 +599,13 @@ export default function CalorieTracker() {
           </DialogHeader>
           
           <Tabs defaultValue="search" className="flex-1 overflow-hidden flex flex-col">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="search">Search Foods</TabsTrigger>
-              <TabsTrigger value="custom">Custom Entry</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="search">Search</TabsTrigger>
+              <TabsTrigger value="custom">Custom</TabsTrigger>
+              <TabsTrigger value="scan" onClick={handleCameraClick}>
+                <Camera className="w-4 h-4 mr-1" />
+                Scan
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="search" className="flex-1 overflow-hidden flex flex-col">
@@ -401,7 +702,292 @@ export default function CalorieTracker() {
                 Add Food
               </Button>
             </TabsContent>
+            
+            <TabsContent value="scan" className="flex-1">
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Camera className="w-12 h-12 text-nutrition mb-4" />
+                <p className="text-muted-foreground mb-4">Take a photo of your food to get instant nutritional analysis</p>
+                <Button onClick={handleCameraClick} className="bg-nutrition hover:bg-nutrition-dark">
+                  <Camera className="w-4 h-4 mr-2" />
+                  Open Camera
+                </Button>
+              </div>
+            </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Food Scanner Results Dialog */}
+      <Dialog open={showFoodScanner} onOpenChange={setShowFoodScanner}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="w-5 h-5 text-nutrition" />
+              Food Analysis
+            </DialogTitle>
+          </DialogHeader>
+          
+          {isAnalyzing ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="w-12 h-12 text-nutrition animate-spin mb-4" />
+              <p className="text-lg font-medium">Analyzing food...</p>
+              <p className="text-sm text-muted-foreground">This may take a few seconds</p>
+            </div>
+          ) : editableAnalysis.length > 0 ? (
+            <div className="flex-1 overflow-y-auto space-y-4">
+              {analysisResult?.confidence && (
+                <div className={`text-xs px-2 py-1 rounded-full inline-block ${
+                  analysisResult.confidence === 'high' ? 'bg-green-500/20 text-green-600' :
+                  analysisResult.confidence === 'medium' ? 'bg-amber-500/20 text-amber-600' :
+                  'bg-red-500/20 text-red-600'
+                }`}>
+                  {analysisResult.confidence} confidence
+                </div>
+              )}
+              
+              <div className="space-y-3">
+                {editableAnalysis.map((food, index) => (
+                  <motion.div 
+                    key={index}
+                    layout
+                    className="p-3 rounded-xl bg-muted/50 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <Input
+                        value={food.name}
+                        onChange={(e) => updateEditableFood(index, 'name', e.target.value)}
+                        className="font-medium bg-transparent border-none p-0 h-auto text-base"
+                      />
+                      <button
+                        onClick={() => removeAnalyzedFood(index)}
+                        className="p-1 rounded-lg hover:bg-destructive/20"
+                      >
+                        <X className="w-4 h-4 text-destructive" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{food.portion}</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      <div>
+                        <Label className="text-xs">Calories</Label>
+                        <Input
+                          type="number"
+                          value={food.calories}
+                          onChange={(e) => updateEditableFood(index, 'calories', e.target.value)}
+                          className="h-8"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Protein</Label>
+                        <Input
+                          type="number"
+                          value={food.protein}
+                          onChange={(e) => updateEditableFood(index, 'protein', e.target.value)}
+                          className="h-8"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Carbs</Label>
+                        <Input
+                          type="number"
+                          value={food.carbs}
+                          onChange={(e) => updateEditableFood(index, 'carbs', e.target.value)}
+                          className="h-8"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Fat</Label>
+                        <Input
+                          type="number"
+                          value={food.fat}
+                          onChange={(e) => updateEditableFood(index, 'fat', e.target.value)}
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              
+              {analysisResult?.notes && (
+                <p className="text-xs text-muted-foreground italic">{analysisResult.notes}</p>
+              )}
+              
+              <div className="p-3 rounded-xl bg-nutrition-light">
+                <p className="text-sm font-medium mb-2">Total Nutrition</p>
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div>
+                    <p className="text-lg font-bold text-nutrition">
+                      {editableAnalysis.reduce((sum, f) => sum + f.calories, 0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">cal</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-blue-500">
+                      {editableAnalysis.reduce((sum, f) => sum + f.protein, 0)}g
+                    </p>
+                    <p className="text-xs text-muted-foreground">protein</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-amber-500">
+                      {editableAnalysis.reduce((sum, f) => sum + f.carbs, 0)}g
+                    </p>
+                    <p className="text-xs text-muted-foreground">carbs</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-rose-500">
+                      {editableAnalysis.reduce((sum, f) => sum + f.fat, 0)}g
+                    </p>
+                    <p className="text-xs text-muted-foreground">fat</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 mb-2">
+                <Label>Add to:</Label>
+                <Select value={selectedMealType} onValueChange={(v) => setSelectedMealType(v as FoodLog['mealType'])}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mealTypes.map(m => (
+                      <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Button 
+                onClick={addAnalyzedFoodsToMeal}
+                className="w-full bg-nutrition hover:bg-nutrition-dark"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add to {mealTypes.find(m => m.id === selectedMealType)?.label}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-muted-foreground">No food items detected. Try taking another photo.</p>
+              <Button onClick={handleCameraClick} className="mt-4 bg-nutrition hover:bg-nutrition-dark">
+                <Camera className="w-4 h-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Food Dialog */}
+      <Dialog open={!!editingFood} onOpenChange={() => setEditingFood(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-nutrition" />
+              Edit Food
+            </DialogTitle>
+          </DialogHeader>
+          
+          {editingFood && (
+            <div className="space-y-4">
+              <div>
+                <Label>Food Name</Label>
+                <Input
+                  value={editingFood.food.name}
+                  onChange={(e) => setEditingFood(prev => prev ? { ...prev, food: { ...prev.food, name: e.target.value } } : null)}
+                />
+              </div>
+              <div>
+                <Label>Calories</Label>
+                <Input
+                  type="number"
+                  value={editingFood.food.calories}
+                  onChange={(e) => setEditingFood(prev => prev ? { ...prev, food: { ...prev.food, calories: parseInt(e.target.value) || 0 } } : null)}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label>Protein (g)</Label>
+                  <Input
+                    type="number"
+                    value={editingFood.food.protein || ''}
+                    onChange={(e) => setEditingFood(prev => prev ? { ...prev, food: { ...prev.food, protein: e.target.value ? parseInt(e.target.value) : undefined } } : null)}
+                  />
+                </div>
+                <div>
+                  <Label>Carbs (g)</Label>
+                  <Input
+                    type="number"
+                    value={editingFood.food.carbs || ''}
+                    onChange={(e) => setEditingFood(prev => prev ? { ...prev, food: { ...prev.food, carbs: e.target.value ? parseInt(e.target.value) : undefined } } : null)}
+                  />
+                </div>
+                <div>
+                  <Label>Fat (g)</Label>
+                  <Input
+                    type="number"
+                    value={editingFood.food.fat || ''}
+                    onChange={(e) => setEditingFood(prev => prev ? { ...prev, food: { ...prev.food, fat: e.target.value ? parseInt(e.target.value) : undefined } } : null)}
+                  />
+                </div>
+              </div>
+              <Button 
+                onClick={handleUpdateFood}
+                className="w-full bg-nutrition hover:bg-nutrition-dark"
+              >
+                Save Changes
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Macro Goals Dialog */}
+      <Dialog open={showMacroGoals} onOpenChange={setShowMacroGoals}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-nutrition" />
+              Set Macro Goals
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Set your daily macro targets. Leave empty if you don't want to track a specific macro.</p>
+            
+            <div>
+              <Label>Protein Goal (g)</Label>
+              <Input
+                type="number"
+                placeholder="e.g., 150"
+                value={macroGoals.protein}
+                onChange={(e) => setMacroGoals(prev => ({ ...prev, protein: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Carbs Goal (g)</Label>
+              <Input
+                type="number"
+                placeholder="e.g., 250"
+                value={macroGoals.carbs}
+                onChange={(e) => setMacroGoals(prev => ({ ...prev, carbs: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Fat Goal (g)</Label>
+              <Input
+                type="number"
+                placeholder="e.g., 65"
+                value={macroGoals.fat}
+                onChange={(e) => setMacroGoals(prev => ({ ...prev, fat: e.target.value }))}
+              />
+            </div>
+            
+            <Button 
+              onClick={handleSaveMacroGoals}
+              className="w-full bg-nutrition hover:bg-nutrition-dark"
+            >
+              Save Macro Goals
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -33,10 +33,17 @@ export interface FitnessLog {
   time: string;
 }
 
+export interface MacroGoals {
+  protein?: number; // grams
+  carbs?: number; // grams
+  fat?: number; // grams
+}
+
 export interface UserGoals {
   waterGoal: number; // in ml
   calorieGoal: number;
   fitnessGoal: number; // in minutes per week
+  macros?: MacroGoals;
 }
 
 export interface DailyStats {
