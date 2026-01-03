@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { format } from 'date-fns';
-import { Droplets, Utensils } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { format, subDays } from 'date-fns';
+import { Droplets, Utensils, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ProgressRing';
 import { QuickLogButton } from '@/components/QuickLogButton';
@@ -26,6 +26,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [quote, setQuote] = useState('');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [isHeaderSticky, setIsHeaderSticky] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<'today' | 'yesterday'>('today');
+  const headerRef = useRef<HTMLElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   
   const {
     profile,
@@ -49,28 +53,80 @@ export default function Dashboard() {
     setQuote(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
   }, []);
 
+  // Sticky header observer
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsHeaderSticky(!entry.isIntersecting);
+      },
+      { threshold: 0, rootMargin: '-1px 0px 0px 0px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
   const handleGeneratePlan = async () => {
     if (healthProfile) {
       await generatePlan(healthProfile);
     }
   };
 
+  // Get data for selected day
+  const getWaterForDay = (day: 'today' | 'yesterday') => {
+    const dateStr = format(day === 'today' ? new Date() : subDays(new Date(), 1), 'yyyy-MM-dd');
+    return waterLogs
+      .filter(log => log.date === dateStr)
+      .reduce((sum, log) => sum + log.amount, 0);
+  };
+
+  const getCaloriesForDay = (day: 'today' | 'yesterday') => {
+    const dateStr = format(day === 'today' ? new Date() : subDays(new Date(), 1), 'yyyy-MM-dd');
+    return foodLogs
+      .filter(log => log.date === dateStr)
+      .reduce((sum, log) => sum + log.foodItem.calories, 0);
+  };
+
   const todayWater = getTodayWater();
   const todayCalories = getTodayCalories();
   const todayPoints = getTodayPoints();
 
-  const waterProgress = (todayWater / profile.goals.waterGoal) * 100;
-  const caloriesProgress = (todayCalories / profile.goals.calorieGoal) * 100;
+  const displayWater = getWaterForDay(selectedDay);
+  const displayCalories = getCaloriesForDay(selectedDay);
+
+  const waterProgress = (displayWater / profile.goals.waterGoal) * 100;
+  const caloriesProgress = (displayCalories / profile.goals.calorieGoal) * 100;
 
   const handleQuickWater = (amount: number) => {
     addWater(amount);
     setShowQuickAdd(false);
   };
 
+  const handleDayNavigation = (direction: 'left' | 'right') => {
+    if (direction === 'right' && selectedDay === 'today') {
+      setSelectedDay('yesterday');
+    } else if (direction === 'left' && selectedDay === 'yesterday') {
+      setSelectedDay('today');
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-background pb-4 overflow-y-auto relative">
-      {/* Header */}
-      <header className="pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-5 md:px-8">
+      {/* Sentinel for sticky detection */}
+      <div ref={sentinelRef} className="h-0 w-full" />
+      
+      {/* Sticky Header */}
+      <header 
+        ref={headerRef}
+        className={`pt-4 sm:pt-6 pb-3 sm:pb-4 px-4 sm:px-5 md:px-8 bg-background transition-all duration-300 ${
+          isHeaderSticky 
+            ? 'sticky top-0 z-50 shadow-md border-b border-border/50 backdrop-blur-sm bg-background/95' 
+            : ''
+        }`}
+      >
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -83,6 +139,7 @@ export default function Dashboard() {
             <h1 className="text-xl sm:text-2xl font-bold text-foreground mt-1">
               Hi, {profile.name.split(' ')[0]}! 👋
             </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">Make yourself proud today!</p>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -99,48 +156,96 @@ export default function Dashboard() {
         onGeneratePlan={handleGeneratePlan}
       />
 
-      {/* Progress Rings */}
+      {/* Progress Rings with Day Navigation */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6" delay={0.1}>
-        <h2 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6 text-center">Today's Progress</h2>
-        <div className="flex justify-center items-center gap-6">
-          <ProgressRing
-            progress={waterProgress}
-            variant="water"
-            label="Water"
-            value={`${Math.round(todayWater / 1000 * 10) / 10}L`}
-            subLabel={`of ${profile.goals.waterGoal / 1000}L`}
-            size={100}
-            className="sm:hidden"
-          />
-          <ProgressRing
-            progress={caloriesProgress}
-            variant="nutrition"
-            label="Calories"
-            value={`${todayCalories}`}
-            subLabel={`of ${profile.goals.calorieGoal}`}
-            size={100}
-            className="sm:hidden"
-          />
-          {/* Larger screens */}
-          <ProgressRing
-            progress={waterProgress}
-            variant="water"
-            label="Water"
-            value={`${Math.round(todayWater / 1000 * 10) / 10}L`}
-            subLabel={`of ${profile.goals.waterGoal / 1000}L`}
-            size={140}
-            className="hidden sm:flex"
-          />
-          <ProgressRing
-            progress={caloriesProgress}
-            variant="nutrition"
-            label="Calories"
-            value={`${todayCalories}`}
-            subLabel={`of ${profile.goals.calorieGoal}`}
-            size={140}
-            className="hidden sm:flex"
-          />
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleDayNavigation('left')}
+            disabled={selectedDay === 'today'}
+            className="h-8 w-8 transition-opacity"
+          >
+            <ChevronLeft className={`w-5 h-5 ${selectedDay === 'today' ? 'opacity-30' : ''}`} />
+          </Button>
+          
+          <div className="text-center">
+            <AnimatePresence mode="wait">
+              <motion.h2 
+                key={selectedDay}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.2 }}
+                className="text-base sm:text-lg font-semibold"
+              >
+                {selectedDay === 'today' ? "Today's Progress" : "Yesterday's Progress"}
+              </motion.h2>
+            </AnimatePresence>
+            <p className="text-xs text-muted-foreground">
+              {format(selectedDay === 'today' ? new Date() : subDays(new Date(), 1), 'MMM d, yyyy')}
+            </p>
+          </div>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleDayNavigation('right')}
+            disabled={selectedDay === 'yesterday'}
+            className="h-8 w-8 transition-opacity"
+          >
+            <ChevronRight className={`w-5 h-5 ${selectedDay === 'yesterday' ? 'opacity-30' : ''}`} />
+          </Button>
         </div>
+        
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={selectedDay}
+            initial={{ opacity: 0, x: selectedDay === 'yesterday' ? 50 : -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: selectedDay === 'yesterday' ? -50 : 50 }}
+            transition={{ duration: 0.3 }}
+            className="flex justify-center items-center gap-6"
+          >
+            <ProgressRing
+              progress={waterProgress}
+              variant="water"
+              label="Water"
+              value={`${Math.round(displayWater / 1000 * 10) / 10}L`}
+              subLabel={`of ${profile.goals.waterGoal / 1000}L`}
+              size={100}
+              className="sm:hidden"
+            />
+            <ProgressRing
+              progress={caloriesProgress}
+              variant="nutrition"
+              label="Calories"
+              value={`${displayCalories}`}
+              subLabel={`of ${profile.goals.calorieGoal}`}
+              size={100}
+              className="sm:hidden"
+            />
+            {/* Larger screens */}
+            <ProgressRing
+              progress={waterProgress}
+              variant="water"
+              label="Water"
+              value={`${Math.round(displayWater / 1000 * 10) / 10}L`}
+              subLabel={`of ${profile.goals.waterGoal / 1000}L`}
+              size={140}
+              className="hidden sm:flex"
+            />
+            <ProgressRing
+              progress={caloriesProgress}
+              variant="nutrition"
+              label="Calories"
+              value={`${displayCalories}`}
+              subLabel={`of ${profile.goals.calorieGoal}`}
+              size={140}
+              className="hidden sm:flex"
+            />
+          </motion.div>
+        </AnimatePresence>
       </DashboardCard>
 
       {/* Points */}

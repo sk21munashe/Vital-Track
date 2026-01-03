@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format, subDays, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, parseISO, isWithinInterval } from 'date-fns';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { Droplets, Utensils, TrendingUp } from 'lucide-react';
 import { DashboardCard } from '@/components/DashboardCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -152,7 +152,7 @@ export function ProgressCharts({ waterLogs, foodLogs, waterGoal, calorieGoal }: 
             </div>
           </div>
 
-          {/* Water Chart */}
+          {/* Water Chart - Bar Graph */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium flex items-center gap-2">
               <Droplets className="w-4 h-4 text-water" />
@@ -160,13 +160,7 @@ export function ProgressCharts({ waterLogs, foodLogs, waterGoal, calorieGoal }: 
             </h3>
             <div className="h-32 sm:h-40">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                  <defs>
-                    <linearGradient id="waterGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(200, 85%, 55%)" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="hsl(200, 85%, 55%)" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="name" 
@@ -188,14 +182,12 @@ export function ProgressCharts({ waterLogs, foodLogs, waterGoal, calorieGoal }: 
                     }}
                     labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate}
                   />
-                  <Area 
-                    type="monotone" 
+                  <Bar 
                     dataKey="water" 
-                    stroke="hsl(200, 85%, 55%)" 
-                    strokeWidth={2}
-                    fill="url(#waterGradient)" 
+                    fill="hsl(200, 85%, 55%)" 
+                    radius={[4, 4, 0, 0]}
                   />
-                </AreaChart>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
