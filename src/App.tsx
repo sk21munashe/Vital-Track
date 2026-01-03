@@ -10,6 +10,7 @@ import WaterTracker from "./pages/WaterTracker";
 import CalorieTracker from "./pages/CalorieTracker";
 import FitnessTracker from "./pages/FitnessTracker";
 import Profile from "./pages/Profile";
+import HealthCoach from "./pages/HealthCoach";
 import NotFound from "./pages/NotFound";
 import { BottomNav } from "./components/BottomNav";
 import { SplashScreen } from "./components/SplashScreen";
@@ -35,6 +36,7 @@ const App = () => {
                   <Route path="/calories" element={<CalorieTracker />} />
                   <Route path="/fitness" element={<FitnessTracker />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/coach" element={<HealthCoach />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>

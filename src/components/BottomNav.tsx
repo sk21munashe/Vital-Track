@@ -1,14 +1,14 @@
 import { NavLink } from '@/components/NavLink';
-import { Home, Droplets, Utensils, Dumbbell, User } from 'lucide-react';
+import { Home, Droplets, Utensils, Dumbbell, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Home' },
   { to: '/water', icon: Droplets, label: 'Water' },
-  { to: '/calories', icon: Utensils, label: 'Calories' },
+  { to: '/coach', icon: Sparkles, label: 'AI Coach' },
   { to: '/fitness', icon: Dumbbell, label: 'Fitness' },
-  { to: '/profile', icon: User, label: 'Profile' },
+  { to: '/calories', icon: Utensils, label: 'Calories' },
 ];
 
 export function BottomNav() {
