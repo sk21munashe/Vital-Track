@@ -1,23 +1,21 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { format, subDays, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, parseISO, isWithinInterval } from 'date-fns';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
-import { Droplets, Utensils, Dumbbell, TrendingUp } from 'lucide-react';
+import { format, subDays, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, parseISO, isWithinInterval } from 'date-fns';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { Droplets, Utensils, TrendingUp } from 'lucide-react';
 import { DashboardCard } from '@/components/DashboardCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WaterLog, FoodLog, FitnessLog } from '@/types/wellness';
+import { WaterLog, FoodLog } from '@/types/wellness';
 
 interface ProgressChartsProps {
   waterLogs: WaterLog[];
   foodLogs: FoodLog[];
-  fitnessLogs: FitnessLog[];
   waterGoal: number;
   calorieGoal: number;
 }
 
 type TimeRange = 'weekly' | 'monthly' | 'annual';
 
-export function ProgressCharts({ waterLogs, foodLogs, fitnessLogs, waterGoal, calorieGoal }: ProgressChartsProps) {
+export function ProgressCharts({ waterLogs, foodLogs, waterGoal, calorieGoal }: ProgressChartsProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('weekly');
 
   const chartData = useMemo(() => {
@@ -37,16 +35,12 @@ export function ProgressCharts({ waterLogs, foodLogs, fitnessLogs, waterGoal, ca
         const dayCalories = foodLogs
           .filter(log => log.date === dateStr)
           .reduce((sum, log) => sum + log.foodItem.calories, 0);
-        const dayFitness = fitnessLogs
-          .filter(log => log.date === dateStr)
-          .reduce((sum, log) => sum + log.duration, 0);
         
         return {
           name: format(day, 'EEE'),
           fullDate: format(day, 'MMM d'),
           water: Math.round(dayWater / 1000 * 10) / 10,
           calories: dayCalories,
-          fitness: dayFitness,
           waterGoal: waterGoal / 1000,
           calorieGoal,
         };
@@ -65,16 +59,12 @@ export function ProgressCharts({ waterLogs, foodLogs, fitnessLogs, waterGoal, ca
         const dayCalories = foodLogs
           .filter(log => log.date === dateStr)
           .reduce((sum, log) => sum + log.foodItem.calories, 0);
-        const dayFitness = fitnessLogs
-          .filter(log => log.date === dateStr)
-          .reduce((sum, log) => sum + log.duration, 0);
         
         return {
           name: format(day, 'd'),
           fullDate: format(day, 'MMM d'),
           water: Math.round(dayWater / 1000 * 10) / 10,
           calories: dayCalories,
-          fitness: dayFitness,
           waterGoal: waterGoal / 1000,
           calorieGoal,
         };
@@ -101,12 +91,6 @@ export function ProgressCharts({ waterLogs, foodLogs, fitnessLogs, waterGoal, ca
             return isWithinInterval(logDate, { start: monthStart, end: monthEnd });
           })
           .reduce((sum, log) => sum + log.foodItem.calories, 0);
-        const monthFitness = fitnessLogs
-          .filter(log => {
-            const logDate = parseISO(log.date);
-            return isWithinInterval(logDate, { start: monthStart, end: monthEnd });
-          })
-          .reduce((sum, log) => sum + log.duration, 0);
         
         const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd }).length;
         
@@ -115,19 +99,17 @@ export function ProgressCharts({ waterLogs, foodLogs, fitnessLogs, waterGoal, ca
           fullDate: format(month, 'MMMM yyyy'),
           water: Math.round((monthWater / daysInMonth) / 1000 * 10) / 10,
           calories: Math.round(monthCalories / daysInMonth),
-          fitness: Math.round(monthFitness / daysInMonth),
           waterGoal: waterGoal / 1000,
           calorieGoal,
         };
       });
     }
-  }, [timeRange, waterLogs, foodLogs, fitnessLogs, waterGoal, calorieGoal]);
+  }, [timeRange, waterLogs, foodLogs, waterGoal, calorieGoal]);
 
   const totals = useMemo(() => {
     return {
       water: chartData.reduce((sum, d) => sum + d.water, 0),
       calories: chartData.reduce((sum, d) => sum + d.calories, 0),
-      fitness: chartData.reduce((sum, d) => sum + d.fitness, 0),
     };
   }, [chartData]);
 
@@ -149,7 +131,7 @@ export function ProgressCharts({ waterLogs, foodLogs, fitnessLogs, waterGoal, ca
 
         <TabsContent value={timeRange} className="space-y-4">
           {/* Summary Stats */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4">
             <div className="text-center p-2 sm:p-3 rounded-lg bg-water-light/50">
               <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-water mx-auto mb-1" />
               <p className="text-xs sm:text-sm text-muted-foreground">
@@ -166,15 +148,6 @@ export function ProgressCharts({ waterLogs, foodLogs, fitnessLogs, waterGoal, ca
               </p>
               <p className="text-sm sm:text-lg font-bold text-nutrition">
                 {totals.calories.toLocaleString()}
-              </p>
-            </div>
-            <div className="text-center p-2 sm:p-3 rounded-lg bg-fitness-light/50">
-              <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-fitness mx-auto mb-1" />
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                {timeRange === 'annual' ? 'Avg/Day' : 'Total'}
-              </p>
-              <p className="text-sm sm:text-lg font-bold text-fitness">
-                {totals.fitness}m
               </p>
             </div>
           </div>
@@ -263,49 +236,6 @@ export function ProgressCharts({ waterLogs, foodLogs, fitnessLogs, waterGoal, ca
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Fitness Chart */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium flex items-center gap-2">
-              <Dumbbell className="w-4 h-4 text-fitness" />
-              Fitness (minutes)
-            </h3>
-            <div className="h-32 sm:h-40">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      fontSize: '12px'
-                    }}
-                    labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="fitness" 
-                    stroke="hsl(28, 90%, 55%)" 
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(28, 90%, 55%)', strokeWidth: 0, r: 3 }}
-                    activeDot={{ r: 5, fill: 'hsl(28, 90%, 55%)' }}
-                  />
-                </LineChart>
               </ResponsiveContainer>
             </div>
           </div>

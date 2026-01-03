@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { Droplets, Utensils, Dumbbell, Plus } from 'lucide-react';
+import { Droplets, Utensils } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ProgressRing';
 import { QuickLogButton } from '@/components/QuickLogButton';
 import { StreakBadge } from '@/components/StreakBadge';
 import { PointsBadge } from '@/components/PointsBadge';
 import { DashboardCard } from '@/components/DashboardCard';
-import { HabitsSection } from '@/components/HabitsSection';
 import { ProgressCharts } from '@/components/ProgressCharts';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AIPlanCard } from '@/components/AIPlanCard';
@@ -30,19 +29,12 @@ export default function Dashboard() {
   
   const {
     profile,
-    habits,
     waterLogs,
     foodLogs,
-    fitnessLogs,
     getTodayWater,
     getTodayCalories,
-    getTodayFitness,
     getTodayPoints,
     addWater,
-    addHabit,
-    deleteHabit,
-    logHabit,
-    getTodayHabitProgress,
   } = useWellnessData();
 
   const {
@@ -65,12 +57,10 @@ export default function Dashboard() {
 
   const todayWater = getTodayWater();
   const todayCalories = getTodayCalories();
-  const todayFitness = getTodayFitness();
   const todayPoints = getTodayPoints();
 
   const waterProgress = (todayWater / profile.goals.waterGoal) * 100;
   const caloriesProgress = (todayCalories / profile.goals.calorieGoal) * 100;
-  const fitnessProgress = (todayFitness / 30) * 100;
 
   const handleQuickWater = (amount: number) => {
     addWater(amount);
@@ -112,14 +102,14 @@ export default function Dashboard() {
       {/* Progress Rings */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6" delay={0.1}>
         <h2 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6 text-center">Today's Progress</h2>
-        <div className="flex justify-around items-center gap-2">
+        <div className="flex justify-center items-center gap-6">
           <ProgressRing
             progress={waterProgress}
             variant="water"
             label="Water"
             value={`${Math.round(todayWater / 1000 * 10) / 10}L`}
             subLabel={`of ${profile.goals.waterGoal / 1000}L`}
-            size={80}
+            size={100}
             className="sm:hidden"
           />
           <ProgressRing
@@ -131,15 +121,6 @@ export default function Dashboard() {
             size={100}
             className="sm:hidden"
           />
-          <ProgressRing
-            progress={fitnessProgress}
-            variant="fitness"
-            label="Fitness"
-            value={`${todayFitness}m`}
-            subLabel="of 30 min"
-            size={80}
-            className="sm:hidden"
-          />
           {/* Larger screens */}
           <ProgressRing
             progress={waterProgress}
@@ -147,7 +128,7 @@ export default function Dashboard() {
             label="Water"
             value={`${Math.round(todayWater / 1000 * 10) / 10}L`}
             subLabel={`of ${profile.goals.waterGoal / 1000}L`}
-            size={120}
+            size={140}
             className="hidden sm:flex"
           />
           <ProgressRing
@@ -156,16 +137,7 @@ export default function Dashboard() {
             label="Calories"
             value={`${todayCalories}`}
             subLabel={`of ${profile.goals.calorieGoal}`}
-            size={160}
-            className="hidden sm:flex"
-          />
-          <ProgressRing
-            progress={fitnessProgress}
-            variant="fitness"
-            label="Fitness"
-            value={`${todayFitness}m`}
-            subLabel="of 30 min"
-            size={120}
+            size={140}
             className="hidden sm:flex"
           />
         </div>
@@ -179,7 +151,7 @@ export default function Dashboard() {
       {/* Quick Log Section */}
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
         <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Quick Log</h2>
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <QuickLogButton
             icon={Droplets}
             label="Water"
@@ -191,12 +163,6 @@ export default function Dashboard() {
             label="Meal"
             variant="nutrition"
             onClick={() => navigate('/calories')}
-          />
-          <QuickLogButton
-            icon={Dumbbell}
-            label="Workout"
-            variant="fitness"
-            onClick={() => navigate('/fitness')}
           />
         </div>
       </div>
@@ -219,43 +185,16 @@ export default function Dashboard() {
             completed={false}
             color="nutrition"
           />
-          <ChallengeItem
-            title="30 minutes of activity"
-            progress={Math.min(todayFitness, 30)}
-            total={30}
-            completed={todayFitness >= 30}
-            color="fitness"
-          />
         </div>
       </DashboardCard>
-
-      {/* Custom Habits */}
-      <HabitsSection
-        habits={habits}
-        addHabit={addHabit}
-        deleteHabit={deleteHabit}
-        logHabit={logHabit}
-        getTodayHabitProgress={getTodayHabitProgress}
-      />
 
       {/* Progress Charts */}
       <ProgressCharts
         waterLogs={waterLogs}
         foodLogs={foodLogs}
-        fitnessLogs={fitnessLogs}
         waterGoal={profile.goals.waterGoal}
         calorieGoal={profile.goals.calorieGoal}
       />
-
-      {/* Floating Action Button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setShowQuickAdd(true)}
-        className="fixed bottom-20 sm:bottom-24 right-4 sm:right-5 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg flex items-center justify-center z-40"
-      >
-        <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
-      </motion.button>
 
       {/* Quick Add Dialog */}
       <Dialog open={showQuickAdd} onOpenChange={setShowQuickAdd}>
@@ -308,14 +247,13 @@ interface ChallengeItemProps {
   progress: number;
   total: number;
   completed: boolean;
-  color: 'water' | 'nutrition' | 'fitness';
+  color: 'water' | 'nutrition';
 }
 
 function ChallengeItem({ title, progress, total, completed, color }: ChallengeItemProps) {
   const colorClasses = {
     water: 'bg-water',
     nutrition: 'bg-nutrition',
-    fitness: 'bg-fitness',
   };
 
   return (

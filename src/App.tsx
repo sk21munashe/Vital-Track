@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import WaterTracker from "./pages/WaterTracker";
 import CalorieTracker from "./pages/CalorieTracker";
-import FitnessTracker from "./pages/FitnessTracker";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -67,7 +66,6 @@ const App = () => {
                           <Route path="/" element={<Index />} />
                           <Route path="/water" element={<WaterTracker />} />
                           <Route path="/calories" element={<CalorieTracker />} />
-                          <Route path="/fitness" element={<FitnessTracker />} />
                           <Route path="/profile" element={<Profile />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
