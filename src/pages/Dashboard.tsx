@@ -28,6 +28,8 @@ export default function Dashboard() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [selectedDay, setSelectedDay] = useState<'today' | 'yesterday'>('today');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const headerRef = useRef<HTMLElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   
@@ -289,15 +291,17 @@ export default function Dashboard() {
             variant="ghost"
             size="sm"
             onClick={() => {
-              // Force re-render by triggering a state update
-              setSelectedDay('today');
+              setIsRefreshing(true);
+              setRefreshKey(prev => prev + 1);
+              setTimeout(() => setIsRefreshing(false), 600);
             }}
             className="h-8 w-8 p-0"
+            disabled={isRefreshing}
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 transition-transform ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-3" key={refreshKey}>
           <ChallengeItem
             title="Drink 8 glasses of water"
             progress={Math.min(Math.round((todayWater / 2000) * 8), 8)}
