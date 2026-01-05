@@ -495,37 +495,6 @@ export default function CalorieTracker() {
         </div>
       </div>
 
-      {/* Meal Type Buttons */}
-      <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
-        <h2 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
-          <Utensils className="w-5 h-5 text-nutrition" />
-          Log a Meal
-          <button
-            onClick={handleCameraClick}
-            className="ml-auto p-2 rounded-xl bg-nutrition/20 hover:bg-nutrition/30 transition-colors"
-            title="Scan Food with AI"
-          >
-            <Camera className="w-5 h-5 text-nutrition" />
-          </button>
-        </h2>
-        <div className="grid grid-cols-4 gap-2">
-          {mealTypes.map(({ id, label, icon: Icon }) => (
-            <motion.button
-              key={id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                setSelectedMealType(id as FoodLog['mealType']);
-                setShowAddFood(true);
-              }}
-              className="p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-nutrition-light hover:bg-nutrition/20 transition-colors flex flex-col items-center gap-1 sm:gap-2"
-            >
-              <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-nutrition" />
-              <span className="text-[10px] sm:text-xs font-medium">{label}</span>
-            </motion.button>
-          ))}
-        </div>
-      </div>
 
       {/* Today's Meals */}
       <div className="px-4 sm:px-5 md:px-8">
