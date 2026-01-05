@@ -20,6 +20,7 @@ export type Database = {
           avatar_value: string | null
           created_at: string
           id: string
+          onboarding_completed: boolean
           preferred_name: string | null
           updated_at: string
           user_id: string
@@ -29,6 +30,7 @@ export type Database = {
           avatar_value?: string | null
           created_at?: string
           id?: string
+          onboarding_completed?: boolean
           preferred_name?: string | null
           updated_at?: string
           user_id: string
@@ -38,6 +40,7 @@ export type Database = {
           avatar_value?: string | null
           created_at?: string
           id?: string
+          onboarding_completed?: boolean
           preferred_name?: string | null
           updated_at?: string
           user_id?: string

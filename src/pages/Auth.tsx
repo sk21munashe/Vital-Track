@@ -81,12 +81,17 @@ export default function Auth() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Check if this is a new sign-up that needs onboarding
-        const isNewSignup = sessionStorage.getItem('is_new_signup');
-        if (isNewSignup === 'true') {
-          setAuthMode('onboarding');
-        } else {
+        // Check onboarding status from database
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        if (profile?.onboarding_completed) {
           navigate('/');
+        } else {
+          setAuthMode('onboarding');
         }
       }
     };
@@ -94,12 +99,20 @@ export default function Auth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        const isNewSignup = sessionStorage.getItem('is_new_signup');
-        if (isNewSignup === 'true') {
-          setAuthMode('onboarding');
-        } else {
-          navigate('/');
-        }
+        // Defer the profile check to avoid deadlock
+        setTimeout(async () => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          if (profile?.onboarding_completed) {
+            navigate('/');
+          } else {
+            setAuthMode('onboarding');
+          }
+        }, 0);
       }
     });
 
@@ -151,8 +164,6 @@ export default function Auth() {
           },
         });
         if (error) throw error;
-        // Mark this as a new signup so onboarding and tour show
-        sessionStorage.setItem('is_new_signup', 'true');
         toast.success('Account created! Let\'s personalize your experience.');
       }
     } catch (error: any) {
@@ -162,7 +173,7 @@ export default function Auth() {
     }
   };
 
-  const handleCompleteOnboarding = () => {
+  const handleCompleteOnboarding = async () => {
     const completeProfile: HealthProfile = {
       gender: formData.gender || 'male',
       age: formData.age || 25,
@@ -174,8 +185,17 @@ export default function Auth() {
       activityLevel: formData.activityLevel || 'moderate',
     };
     localStorage.setItem('wellness_health_profile', JSON.stringify(completeProfile));
-    // Clear the new signup flag and set onboarding complete for tour
-    sessionStorage.removeItem('is_new_signup');
+    
+    // Update onboarding_completed in database
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await supabase
+        .from('profiles')
+        .update({ onboarding_completed: true })
+        .eq('user_id', session.user.id);
+    }
+    
+    // Set flag for welcome tour
     sessionStorage.setItem('just_completed_onboarding', 'true');
     toast.success('Profile saved! Welcome to your wellness journey!');
     navigate('/');
