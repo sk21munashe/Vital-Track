@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { WelcomeTour, useTourStatus } from '@/components/WelcomeTour';
 import { WellnessCheckPage } from '@/components/WellnessCheck';
 import { GoalCard } from '@/components/GoalCard';
+import { TodaysFocus } from '@/components/TodaysFocus';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -379,26 +380,10 @@ export default function Dashboard() {
       </AnimatePresence>
 
 
-      {/* Daily Challenges */}
-      <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6" delay={0.3}>
-        <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Daily Challenges</h2>
-        <div className="space-y-3">
-          <ChallengeItem
-            title="Drink 8 glasses of water"
-            progress={Math.min(Math.round((todayWater / 2000) * 8), 8)}
-            total={8}
-            completed={todayWater >= 2000}
-            color="water"
-          />
-          <ChallengeItem
-            title="Log all 3 meals"
-            progress={getTodayMealsLogged()}
-            total={3}
-            completed={getTodayMealsLogged() >= 3}
-            color="nutrition"
-          />
-        </div>
-      </DashboardCard>
+      {/* Today's Focus - Macro Targets */}
+      <div className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6">
+        <TodaysFocus />
+      </div>
 
       {/* Progress Charts */}
       <ProgressCharts
