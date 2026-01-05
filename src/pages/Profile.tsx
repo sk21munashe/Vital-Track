@@ -6,6 +6,7 @@ import { DashboardCard } from '@/components/DashboardCard';
 import { MealPlanSection } from '@/components/MealPlanSection';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import { useAchievements } from '@/hooks/useAchievements';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import { AchievementsSection } from '@/components/AchievementsSection';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,35 +28,16 @@ export default function Profile() {
   const [editGoals, setEditGoals] = useState({ water: '', calories: '' });
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
-  const [preferredName, setPreferredName] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { profile, updateProfile, updateGoals, getTodayPoints } = useWellnessData();
   const { updateAppStreak } = useAchievements();
+  const { displayName, updateDisplayName } = useUserProfile();
 
   // Sync streak with achievements
   useEffect(() => {
     updateAppStreak(profile.streak);
   }, [profile.streak, updateAppStreak]);
-
-  // Fetch preferred name from profiles table
-  useEffect(() => {
-    const fetchPreferredName = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('preferred_name')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profileData?.preferred_name) {
-          setPreferredName(profileData.preferred_name);
-        }
-      }
-    };
-    fetchPreferredName();
-  }, []);
 
   // Sticky header observer
   useEffect(() => {
@@ -75,22 +57,16 @@ export default function Profile() {
 
   const handleUpdateProfile = async () => {
     if (editName.trim()) {
-      // Update local profile
-      updateProfile({ name: editName.trim() });
-      
-      // Update preferred name in database
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from('profiles')
-          .update({ preferred_name: editName.trim() })
-          .eq('user_id', user.id);
-        
-        setPreferredName(editName.trim());
+      try {
+        // Optimistically update via context (handles DB sync)
+        await updateDisplayName(editName.trim());
+        // Also update local wellness profile
+        updateProfile({ name: editName.trim() });
+        setShowEditProfile(false);
+        toast.success('Profile updated!');
+      } catch (error) {
+        toast.error('Failed to update profile');
       }
-      
-      setShowEditProfile(false);
-      toast.success('Profile updated!');
     }
   };
 
@@ -198,10 +174,10 @@ export default function Profile() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-bold truncate">{preferredName || profile.name}</h2>
+              <h2 className="text-lg sm:text-xl font-bold truncate">{displayName}</h2>
               <button
                 onClick={() => {
-                  setEditName(preferredName || profile.name);
+                  setEditName(displayName);
                   setShowEditProfile(true);
                 }}
                 className="p-1 rounded hover:bg-muted flex-shrink-0"

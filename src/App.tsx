@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UserPlanProvider } from "./contexts/UserPlanContext";
+import { UserProfileProvider } from "./contexts/UserProfileContext";
 import Index from "./pages/Index";
 import WaterTracker from "./pages/WaterTracker";
 import CalorieTracker from "./pages/CalorieTracker";
@@ -52,7 +53,8 @@ const App = () => {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <UserPlanProvider>
-          <TooltipProvider>
+          <UserProfileProvider>
+            <TooltipProvider>
             <Toaster />
             <Sonner position="top-center" richColors />
             {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
@@ -81,7 +83,8 @@ const App = () => {
                 />
               </Routes>
             </HashRouter>
-          </TooltipProvider>
+            </TooltipProvider>
+          </UserProfileProvider>
         </UserPlanProvider>
       </QueryClientProvider>
     </ThemeProvider>

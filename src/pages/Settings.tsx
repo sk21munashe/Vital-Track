@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -18,6 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { DashboardCard } from '@/components/DashboardCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -75,9 +76,9 @@ interface UserSettings {
 export default function Settings() {
   const navigate = useNavigate();
   const { profile, updateProfile } = useWellnessData();
-  
+  const { displayName, updateDisplayName } = useUserProfile();
   const [settings, setSettings] = useState<UserSettings>({
-    username: profile.name || '',
+    username: displayName || '',
     age: '',
     height: '',
     weight: '',
@@ -90,14 +91,28 @@ export default function Settings() {
     },
   });
 
+  // Sync settings username when displayName changes from context
+  useEffect(() => {
+    if (displayName) {
+      setSettings(prev => ({ ...prev, username: displayName }));
+    }
+  }, [displayName]);
+
   const [showEditDetails, setShowEditDetails] = useState(false);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const handleSaveDetails = () => {
-    updateProfile({ name: settings.username });
-    setShowEditDetails(false);
-    toast.success('Personal details updated!');
+  const handleSaveDetails = async () => {
+    try {
+      // Optimistically update via context (handles DB sync)
+      await updateDisplayName(settings.username);
+      // Also update local wellness profile
+      updateProfile({ name: settings.username });
+      setShowEditDetails(false);
+      toast.success('Personal details updated!');
+    } catch (error) {
+      toast.error('Failed to update details');
+    }
   };
 
   const handleSignOut = async () => {
@@ -197,7 +212,7 @@ export default function Settings() {
           <SettingRow 
             icon={User}
             label="Personal Details"
-            value={settings.username || 'Not set'}
+            value={displayName || 'Not set'}
             onClick={() => setShowEditDetails(true)}
           />
           <div className="border-t border-border/50 mx-3" />

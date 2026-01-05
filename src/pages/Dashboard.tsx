@@ -12,6 +12,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { AIPlanCard } from '@/components/AIPlanCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import { useUserPlan } from '@/contexts/UserPlanContext';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import { motivationalQuotes } from '@/data/foodDatabase';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,7 +36,6 @@ export default function Dashboard() {
   const [selectedDay, setSelectedDay] = useState<'today' | 'yesterday'>('today');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [preferredName, setPreferredName] = useState<string | null>(null);
   const [userHeight, setUserHeight] = useState<number | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -53,37 +53,27 @@ export default function Dashboard() {
 
   // Use the global user plan context (data synced from database)
   useUserPlan();
-
+  
+  // Use centralized user profile context for displayName
+  const { displayName } = useUserProfile();
   const { showTour, completeTour } = useTourStatus();
+  
   useEffect(() => {
     setQuote(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
   }, []);
-
-  // Fetch preferred name and health data from profiles/health plans
+  // Fetch health data (weight/height) from health plans
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchHealthData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('preferred_name')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profileData?.preferred_name) {
-          setPreferredName(profileData.preferred_name);
-        }
-
-        // Fetch health plan data for weight and height
         const { data: healthPlanData } = await supabase
           .from('user_health_plans')
-          .select('health_profile, health_plan')
+          .select('health_profile')
           .eq('user_id', user.id)
           .single();
         
         if (healthPlanData) {
           const healthProfile = healthPlanData.health_profile as any;
-          const healthPlan = healthPlanData.health_plan as any;
           
           if (healthProfile?.currentWeight) {
             setCurrentWeight(healthProfile.currentWeight);
@@ -94,7 +84,7 @@ export default function Dashboard() {
         }
       }
     };
-    fetchUserData();
+    fetchHealthData();
   }, []);
 
   // Sticky header observer
@@ -232,7 +222,7 @@ export default function Dashboard() {
               {format(new Date(), 'EEEE, MMMM d')}
             </p>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground mt-1">
-              Hi, {(preferredName || profile.name).split(' ')[0]}! 👋
+              Hi, {displayName.split(' ')[0]}! 👋
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">Make yourself proud today!</p>
           </div>
