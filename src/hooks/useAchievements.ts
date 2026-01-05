@@ -159,8 +159,6 @@ export function useAchievements() {
         return Math.min((progress.hydration_streak / achievement.requirement) * 100, 100);
       case 'nutrition':
         return Math.min((progress.calorie_days / achievement.requirement) * 100, 100);
-      case 'weight':
-        return Math.min((progress.weight_logs / achievement.requirement) * 100, 100);
       case 'streak':
         return Math.min((progress.app_streak / achievement.requirement) * 100, 100);
       default:

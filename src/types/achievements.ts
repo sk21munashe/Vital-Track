@@ -1,5 +1,5 @@
 export type AchievementTier = 'bronze' | 'silver' | 'gold';
-export type AchievementCategory = 'hydration' | 'nutrition' | 'weight' | 'streak';
+export type AchievementCategory = 'hydration' | 'nutrition' | 'streak';
 
 export interface AchievementDefinition {
   id: string;
@@ -81,38 +81,6 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     tier: 'gold',
     requirement: 90,
     unit: 'days',
-  },
-
-  // Weight milestones
-  {
-    id: 'weight_milestone_5',
-    name: 'First Steps',
-    description: 'Log your weight 5 times',
-    icon: 'Scale',
-    category: 'weight',
-    tier: 'bronze',
-    requirement: 5,
-    unit: 'logs',
-  },
-  {
-    id: 'weight_milestone_20',
-    name: 'Consistent Tracker',
-    description: 'Log your weight 20 times',
-    icon: 'Scale',
-    category: 'weight',
-    tier: 'silver',
-    requirement: 20,
-    unit: 'logs',
-  },
-  {
-    id: 'weight_milestone_50',
-    name: 'Weight Warrior',
-    description: 'Log your weight 50 times',
-    icon: 'Scale',
-    category: 'weight',
-    tier: 'gold',
-    requirement: 50,
-    unit: 'logs',
   },
 
   // Streak achievements
