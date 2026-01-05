@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, subDays } from 'date-fns';
-import { Droplets, Utensils, ChevronLeft, ChevronRight, Heart, Flame } from 'lucide-react';
+import { Droplets } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ProgressRing } from '@/components/ProgressRing';
 import { StreakBadge } from '@/components/StreakBadge';
 import { PointsBadge } from '@/components/PointsBadge';
-import { DashboardCard } from '@/components/DashboardCard';
 import { ProgressCharts } from '@/components/ProgressCharts';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AIPlanCard } from '@/components/AIPlanCard';
@@ -24,8 +22,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { WelcomeTour, useTourStatus } from '@/components/WelcomeTour';
 import { WellnessCheckPage } from '@/components/WellnessCheck';
-import { GoalCard } from '@/components/GoalCard';
 import { TodaysFocus } from '@/components/TodaysFocus';
+import { JourneyMap } from '@/components/JourneyMap';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -186,190 +184,23 @@ export default function Dashboard() {
       {/* AI Plan Card */}
       <AIPlanCard />
 
-      {/* Today's Progress - Interactive Goal Cards */}
+      {/* Journey Map - Visual Progress */}
       <div className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDayNavigation('left')}
-            disabled={selectedDay === 'today'}
-            className="h-8 w-8 transition-opacity"
-          >
-            <ChevronLeft className={`w-5 h-5 ${selectedDay === 'today' ? 'opacity-30' : ''}`} />
-          </Button>
-          
-          <div className="text-center">
-            <AnimatePresence mode="wait">
-              <motion.h2 
-                key={selectedDay}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.2 }}
-                className="text-base sm:text-lg font-semibold"
-              >
-                {selectedDay === 'today' ? "Today's Progress" : "Yesterday's Progress"}
-              </motion.h2>
-            </AnimatePresence>
-            <p className="text-xs text-muted-foreground">
-              {format(selectedDay === 'today' ? new Date() : subDays(new Date(), 1), 'MMM d, yyyy')}
-            </p>
-          </div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDayNavigation('right')}
-            disabled={selectedDay === 'yesterday'}
-            className="h-8 w-8 transition-opacity"
-          >
-            <ChevronRight className={`w-5 h-5 ${selectedDay === 'yesterday' ? 'opacity-30' : ''}`} />
-          </Button>
-        </div>
-        
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key={selectedDay}
-            initial={{ opacity: 0, x: selectedDay === 'yesterday' ? 50 : -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: selectedDay === 'yesterday' ? -50 : 50 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-3 gap-3"
-          >
-            <GoalCard
-              icon={Droplets}
-              title="Water"
-              current={Math.round(displayWater)}
-              goal={profile.goals.waterGoal}
-              unit="ml"
-              variant="water"
-              onClick={() => setShowQuickAdd(true)}
-            />
-            <GoalCard
-              icon={Utensils}
-              title="Calories"
-              current={displayCalories}
-              goal={profile.goals.calorieGoal}
-              unit=""
-              variant="nutrition"
-              onClick={() => navigate('/calories')}
-            />
-            <GoalCard
-              icon={Flame}
-              title="Macros"
-              current={getTodayMealsLogged()}
-              goal={3}
-              unit=" meals"
-              variant="macros"
-              onClick={() => navigate('/calories')}
-            />
-          </motion.div>
-        </AnimatePresence>
+        <JourneyMap
+          waterProgress={waterProgress}
+          caloriesProgress={caloriesProgress}
+          wellnessProgress={75}
+          waterValue={`${Math.round(todayWater / 1000 * 10) / 10}L / ${profile.goals.waterGoal / 1000}L`}
+          caloriesValue={`${todayCalories} / ${profile.goals.calorieGoal}`}
+          wellnessValue={currentWeight ? `${currentWeight} kg` : 'Log now'}
+          onWaterClick={() => setShowQuickAdd(true)}
+          onWellnessClick={() => setShowWellnessCheck(true)}
+        />
       </div>
 
       {/* Points */}
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6 flex justify-center">
         <PointsBadge points={todayPoints} />
-      </div>
-
-      {/* Quick Log Section - Three Panel Design */}
-      <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
-        <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Quick Log</h2>
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">
-          {/* Water Card */}
-          <motion.button
-            onClick={() => setShowQuickAdd(true)}
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-gradient-to-br from-water/10 via-water/5 to-transparent border border-water/20 hover:border-water/40 transition-all duration-300 group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-water/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative z-10 flex flex-col items-center text-center gap-1.5 sm:gap-3">
-              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-gradient-water flex items-center justify-center shadow-water">
-                <Droplets className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-base font-semibold text-foreground">Water</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                  {Math.round(todayWater / 1000 * 10) / 10}L / {profile.goals.waterGoal / 1000}L
-                </p>
-              </div>
-              <div className="w-full h-1 sm:h-1.5 bg-muted rounded-full overflow-hidden mt-0.5 sm:mt-1">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(waterProgress, 100)}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="h-full bg-gradient-water rounded-full"
-                />
-              </div>
-            </div>
-          </motion.button>
-
-          {/* Calories Card */}
-          <motion.button
-            onClick={() => navigate('/calories')}
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-gradient-to-br from-nutrition/10 via-nutrition/5 to-transparent border border-nutrition/20 hover:border-nutrition/40 transition-all duration-300 group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-nutrition/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative z-10 flex flex-col items-center text-center gap-1.5 sm:gap-3">
-              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-gradient-nutrition flex items-center justify-center shadow-nutrition">
-                <Utensils className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-base font-semibold text-foreground">Calories</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                  {todayCalories} / {profile.goals.calorieGoal}
-                </p>
-              </div>
-              <div className="w-full h-1 sm:h-1.5 bg-muted rounded-full overflow-hidden mt-0.5 sm:mt-1">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(caloriesProgress, 100)}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="h-full bg-gradient-nutrition rounded-full"
-                />
-              </div>
-            </div>
-          </motion.button>
-
-          {/* Weight & Health Card - Opens Wellness Check */}
-          <motion.button
-            onClick={() => setShowWellnessCheck(true)}
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-gradient-to-br from-health/10 via-health/5 to-transparent border border-health/20 hover:border-health/40 transition-all duration-300 group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-health/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative z-10 flex flex-col items-center text-center gap-1.5 sm:gap-3">
-              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-gradient-health flex items-center justify-center shadow-health">
-                <Heart className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-base font-semibold text-foreground">Wellness</p>
-                {currentWeight ? (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                    {currentWeight} kg
-                  </p>
-                ) : (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                    Tap to check
-                  </p>
-                )}
-              </div>
-              <div className="w-full h-1 sm:h-1.5 bg-muted rounded-full overflow-hidden mt-0.5 sm:mt-1">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: '75%' }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="h-full bg-gradient-health rounded-full"
-                />
-              </div>
-            </div>
-          </motion.button>
-        </div>
       </div>
 
       {/* Wellness Check Full Screen */}
