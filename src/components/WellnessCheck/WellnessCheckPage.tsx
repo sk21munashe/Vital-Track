@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Heart, Scale, TrendingUp, TrendingDown, Target, Calendar, Edit2, Trash2, Ruler, FileText, Sparkles, Lightbulb, Trophy, Download, Share2, Zap, ChevronDown, ChevronUp, Percent, Apple, Droplets, Flame, X, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BodyAvatar } from './BodyAvatar';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,6 +50,7 @@ interface AIInsight {
 }
 
 export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
+  const navigate = useNavigate();
   const [selectedZone, setSelectedZone] = useState<BodyZone | null>(null);
   const [currentWeight, setCurrentWeight] = useState<number | null>(null);
   const [userHeight, setUserHeight] = useState<number | null>(null);
@@ -265,7 +267,7 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
       {/* Header */}
       <header className="flex-shrink-0 px-4 py-3 border-b border-border/50 bg-card/50 backdrop-blur-sm">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <Button variant="ghost" size="sm" onClick={onClose} className="h-9 px-3">
+          <Button variant="ghost" size="sm" onClick={() => onClose ? onClose() : navigate('/')} className="h-9 px-3">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>

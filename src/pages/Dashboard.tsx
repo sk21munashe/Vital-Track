@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { WelcomeTour, useTourStatus } from '@/components/WelcomeTour';
-import { WellnessCheckPage } from '@/components/WellnessCheck';
+
 import { ImmersiveJourney, JourneyData } from '@/components/journey';
 import { ImmersiveFocus } from '@/components/journey/ImmersiveFocus';
 import { FloatingActions } from '@/components/journey/FloatingActions';
@@ -23,7 +23,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 export default function Dashboard() {
   const navigate = useNavigate();
   const [showQuickAdd, setShowQuickAdd] = useState(false);
-  const [showWellnessCheck, setShowWellnessCheck] = useState(false);
+  
   const [challengeCompleted, setChallengeCompleted] = useState(false);
 
   const {
@@ -106,7 +106,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <motion.button
-              onClick={() => setShowWellnessCheck(true)}
+              onClick={() => navigate('/wellness')}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-destructive/10 hover:bg-destructive/20 transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -156,12 +156,6 @@ export default function Dashboard() {
           onLogWater={() => setShowQuickAdd(true)}
         />
 
-        {/* Wellness Check Full Screen */}
-        <AnimatePresence>
-          {showWellnessCheck && (
-            <WellnessCheckPage onClose={() => setShowWellnessCheck(false)} />
-          )}
-        </AnimatePresence>
 
         {/* Quick Add Water Dialog */}
         <Dialog open={showQuickAdd} onOpenChange={setShowQuickAdd}>
