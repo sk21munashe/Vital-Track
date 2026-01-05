@@ -4,7 +4,6 @@ import { format, subDays } from 'date-fns';
 import { Droplets, Utensils, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ProgressRing';
-import { QuickLogButton } from '@/components/QuickLogButton';
 import { StreakBadge } from '@/components/StreakBadge';
 import { PointsBadge } from '@/components/PointsBadge';
 import { DashboardCard } from '@/components/DashboardCard';
@@ -275,22 +274,67 @@ export default function Dashboard() {
         <PointsBadge points={todayPoints} />
       </div>
 
-      {/* Quick Log Section */}
+      {/* Quick Log Section - Dual Panel Design */}
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
         <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Quick Log</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <QuickLogButton
-            icon={Droplets}
-            label="Water"
-            variant="water"
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          {/* Water Card */}
+          <motion.button
             onClick={() => setShowQuickAdd(true)}
-          />
-          <QuickLogButton
-            icon={Utensils}
-            label="Meal"
-            variant="nutrition"
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            className="relative overflow-hidden rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-water/10 via-water/5 to-transparent border border-water/20 hover:border-water/40 transition-all duration-300 group"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-water/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative z-10 flex flex-col items-center text-center gap-2 sm:gap-3">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-water flex items-center justify-center shadow-water">
+                <Droplets className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+              </div>
+              <div>
+                <p className="text-sm sm:text-base font-semibold text-foreground">Water</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {Math.round(todayWater / 1000 * 10) / 10}L / {profile.goals.waterGoal / 1000}L
+                </p>
+              </div>
+              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-1">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(waterProgress, 100)}%` }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="h-full bg-gradient-water rounded-full"
+                />
+              </div>
+            </div>
+          </motion.button>
+
+          {/* Calories Card */}
+          <motion.button
             onClick={() => navigate('/calories')}
-          />
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            className="relative overflow-hidden rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-nutrition/10 via-nutrition/5 to-transparent border border-nutrition/20 hover:border-nutrition/40 transition-all duration-300 group"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-nutrition/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative z-10 flex flex-col items-center text-center gap-2 sm:gap-3">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-nutrition flex items-center justify-center shadow-nutrition">
+                <Utensils className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+              </div>
+              <div>
+                <p className="text-sm sm:text-base font-semibold text-foreground">Calories</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {todayCalories} / {profile.goals.calorieGoal} kcal
+                </p>
+              </div>
+              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-1">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(caloriesProgress, 100)}%` }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="h-full bg-gradient-nutrition rounded-full"
+                />
+              </div>
+            </div>
+          </motion.button>
         </div>
       </div>
 
