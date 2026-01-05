@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, subDays } from 'date-fns';
-import { Droplets, Utensils, ChevronLeft, ChevronRight, Scale, TrendingUp, TrendingDown, Target, ChevronUp, ChevronDown } from 'lucide-react';
+import { Droplets, Utensils, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ProgressRing';
 import { StreakBadge } from '@/components/StreakBadge';
@@ -23,20 +23,16 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { WelcomeTour, useTourStatus } from '@/components/WelcomeTour';
+import { WellnessCheckPage } from '@/components/WellnessCheck';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [quote, setQuote] = useState('');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
-  const [showWeightInput, setShowWeightInput] = useState(false);
-  const [showWeeklySummary, setShowWeeklySummary] = useState(false);
+  const [showWellnessCheck, setShowWellnessCheck] = useState(false);
   const [currentWeight, setCurrentWeight] = useState<number | null>(null);
-  const [weightInput, setWeightInput] = useState('');
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [selectedDay, setSelectedDay] = useState<'today' | 'yesterday'>('today');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [userHeight, setUserHeight] = useState<number | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   
@@ -77,9 +73,6 @@ export default function Dashboard() {
           
           if (healthProfile?.currentWeight) {
             setCurrentWeight(healthProfile.currentWeight);
-          }
-          if (healthProfile?.height) {
-            setUserHeight(healthProfile.height);
           }
         }
       }
@@ -136,62 +129,17 @@ export default function Dashboard() {
   const waterProgress = (displayWater / profile.goals.waterGoal) * 100;
   const caloriesProgress = (displayCalories / profile.goals.calorieGoal) * 100;
 
-  const handleQuickWater = (amount: number) => {
-    addWater(amount);
-    setShowQuickAdd(false);
-  };
-
-  const handleLogWeight = async () => {
-    const weight = parseFloat(weightInput);
-    if (isNaN(weight) || weight <= 0) return;
-    
-    setCurrentWeight(weight);
-    setWeightInput('');
-    setShowWeightInput(false);
-    
-    // Update the health plan in database
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: healthPlanData } = await supabase
-        .from('user_health_plans')
-        .select('health_profile')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (healthPlanData) {
-        const updatedProfile = {
-          ...(healthPlanData.health_profile as any),
-          currentWeight: weight
-        };
-        
-        await supabase
-          .from('user_health_plans')
-          .update({ health_profile: updatedProfile })
-          .eq('user_id', user.id);
-      }
-    }
-  };
-
-  // Calculate weight milestones
-  const getWeightMilestone = () => {
-    if (!currentWeight) return null;
-    const targetWeight = currentWeight - 5; // Example: 5kg loss goal
-    const progress = Math.max(0, Math.min(100, ((currentWeight - targetWeight) / 5) * 100));
-    return {
-      target: targetWeight,
-      progress: 100 - progress,
-      remaining: Math.max(0, currentWeight - targetWeight).toFixed(1)
-    };
-  };
-
-  const weightMilestone = getWeightMilestone();
-
   const handleDayNavigation = (direction: 'left' | 'right') => {
     if (direction === 'right' && selectedDay === 'today') {
       setSelectedDay('yesterday');
     } else if (direction === 'left' && selectedDay === 'yesterday') {
       setSelectedDay('today');
     }
+  };
+
+  const handleQuickWater = (amount: number) => {
+    addWater(amount);
+    setShowQuickAdd(false);
   };
 
   return (
@@ -395,150 +343,50 @@ export default function Dashboard() {
             </div>
           </motion.button>
 
-          {/* Weight & Health Card */}
-          <motion.div
+          {/* Weight & Health Card - Opens Wellness Check */}
+          <motion.button
+            onClick={() => setShowWellnessCheck(true)}
             whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.98 }}
             className="relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-gradient-to-br from-health/10 via-health/5 to-transparent border border-health/20 hover:border-health/40 transition-all duration-300 group"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-health/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative z-10 flex flex-col items-center text-center gap-1.5 sm:gap-3">
               <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-gradient-health flex items-center justify-center shadow-health">
-                <Scale className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                <Heart className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
               <div>
-                <p className="text-xs sm:text-base font-semibold text-foreground">Weight</p>
+                <p className="text-xs sm:text-base font-semibold text-foreground">Wellness</p>
                 {currentWeight ? (
                   <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
                     {currentWeight} kg
                   </p>
                 ) : (
                   <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                    Tap to log
+                    Tap to check
                   </p>
                 )}
               </div>
-              
-              {/* Quick Actions */}
-              <div className="w-full flex gap-1 mt-0.5 sm:mt-1">
-                <button
-                  onClick={() => setShowWeightInput(true)}
-                  className="flex-1 h-6 sm:h-7 text-[9px] sm:text-xs bg-health/20 hover:bg-health/30 text-health rounded-md transition-colors font-medium"
-                >
-                  Log
-                </button>
-                <button
-                  onClick={() => setShowWeeklySummary(!showWeeklySummary)}
-                  className="flex-1 h-6 sm:h-7 text-[9px] sm:text-xs bg-muted hover:bg-muted/80 text-muted-foreground rounded-md transition-colors"
-                >
-                  {showWeeklySummary ? <ChevronUp className="w-3 h-3 mx-auto" /> : <ChevronDown className="w-3 h-3 mx-auto" />}
-                </button>
+              <div className="w-full h-1 sm:h-1.5 bg-muted rounded-full overflow-hidden mt-0.5 sm:mt-1">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: '75%' }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="h-full bg-gradient-health rounded-full"
+                />
               </div>
             </div>
-          </motion.div>
+          </motion.button>
         </div>
-
-        {/* Weekly Health Summary Panel */}
-        <AnimatePresence>
-          {showWeeklySummary && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden"
-            >
-              <div className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-xl bg-card border border-border">
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-health" />
-                  Weekly Health Summary
-                </h3>
-                <div className="grid grid-cols-2 gap-3 text-xs sm:text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-health/10 flex items-center justify-center">
-                      <Scale className="w-4 h-4 text-health" />
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Current</p>
-                      <p className="font-semibold">{currentWeight ? `${currentWeight} kg` : '--'}</p>
-                    </div>
-                  </div>
-                  {userHeight && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-health/10 flex items-center justify-center">
-                        <Target className="w-4 h-4 text-health" />
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Height</p>
-                        <p className="font-semibold">{userHeight} cm</p>
-                      </div>
-                    </div>
-                  )}
-                  {weightMilestone && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                          <Target className="w-4 h-4 text-accent" />
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Next Goal</p>
-                          <p className="font-semibold">{weightMilestone.target} kg</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                          <TrendingDown className="w-4 h-4 text-accent" />
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">To Go</p>
-                          <p className="font-semibold">{weightMilestone.remaining} kg</p>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="mt-3 p-2 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground">
-                    💡 <span className="font-medium">Tip:</span> Track your weight at the same time each day for consistent results.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
-      {/* Weight Input Dialog */}
-      <Dialog open={showWeightInput} onOpenChange={setShowWeightInput}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Scale className="w-5 h-5 text-health" />
-              Log Weight
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                value={weightInput}
-                onChange={(e) => setWeightInput(e.target.value)}
-                placeholder={currentWeight ? currentWeight.toString() : "Enter weight"}
-                className="flex-1 h-12 px-4 text-lg rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-health/50"
-                step="0.1"
-                min="0"
-              />
-              <span className="text-muted-foreground font-medium">kg</span>
-            </div>
-            <Button
-              onClick={handleLogWeight}
-              disabled={!weightInput}
-              className="w-full h-12 bg-gradient-health hover:opacity-90 text-white"
-            >
-              Save Weight
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Wellness Check Full Screen */}
+      <AnimatePresence>
+        {showWellnessCheck && (
+          <WellnessCheckPage onClose={() => setShowWellnessCheck(false)} />
+        )}
+      </AnimatePresence>
+
 
       {/* Daily Challenges */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6" delay={0.3}>
