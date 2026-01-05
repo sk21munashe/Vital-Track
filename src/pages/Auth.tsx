@@ -248,6 +248,28 @@ export default function Auth() {
         .from('profiles')
         .update({ onboarding_completed: true })
         .eq('user_id', session.user.id);
+      
+      // Save health plan to database for sync across the app
+      const completeProfile: HealthProfile = {
+        gender: formData.gender || 'male',
+        age: formData.age || 25,
+        height: formData.height || 170,
+        weight: formData.weight || 70,
+        units: formData.units || 'metric',
+        healthGoal: formData.healthGoal || 'maintenance',
+        dietPreference: formData.dietPreference || 'standard',
+        activityLevel: formData.activityLevel || 'moderate',
+      };
+      
+      if (generatedPlan) {
+        await supabase
+          .from('user_health_plans')
+          .insert([{
+            user_id: session.user.id,
+            health_profile: JSON.parse(JSON.stringify(completeProfile)),
+            health_plan: JSON.parse(JSON.stringify(generatedPlan)),
+          }]);
+      }
     }
     
     // Set flag for welcome tour

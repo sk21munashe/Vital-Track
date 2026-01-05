@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MealPlanReport } from '@/components/MealPlanReport';
-import { useHealthCoach } from '@/hooks/useHealthCoach';
+import { useUserPlan } from '@/contexts/UserPlanContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -35,26 +35,12 @@ export function MealPlanSection() {
   const [showFullReport, setShowFullReport] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   
-  const { healthProfile, healthPlan, isLoading, generatePlan } = useHealthCoach();
+  const { healthProfile, healthPlan, isLoading, refreshPlan } = useUserPlan();
   
   const handleRegenerate = async () => {
-    if (!healthProfile) {
-      toast.error('No health profile found', {
-        description: 'Complete the onboarding to generate a plan'
-      });
-      return;
-    }
-    
     setIsRegenerating(true);
     try {
-      await generatePlan(healthProfile);
-      toast.success('Plan regenerated!', {
-        description: 'Your new personalized meal plan is ready'
-      });
-    } catch (error) {
-      toast.error('Failed to regenerate plan', {
-        description: 'Please try again later'
-      });
+      await refreshPlan();
     } finally {
       setIsRegenerating(false);
     }

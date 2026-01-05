@@ -13,15 +13,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DashboardCard } from '@/components/DashboardCard';
-import { HealthPlan, HealthProfile } from '@/types/healthCoach';
+import { useUserPlan } from '@/contexts/UserPlanContext';
 import { cn } from '@/lib/utils';
-
-interface AIPlanCardProps {
-  plan: HealthPlan | null;
-  profile: HealthProfile | null;
-  isLoading: boolean;
-  onGeneratePlan: () => void;
-}
 
 const GOAL_LABELS: Record<string, string> = {
   weight_loss: 'Weight Loss',
@@ -30,14 +23,15 @@ const GOAL_LABELS: Record<string, string> = {
   maintenance: 'Maintenance',
 };
 
-export function AIPlanCard({ plan, profile, isLoading, onGeneratePlan }: AIPlanCardProps) {
+export function AIPlanCard() {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { healthProfile, healthPlan, isLoading, refreshPlan } = useUserPlan();
 
-  if (!profile) {
+  if (!healthProfile) {
     return null;
   }
 
-  if (!plan) {
+  if (!healthPlan) {
     return (
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 mb-4">
@@ -50,7 +44,7 @@ export function AIPlanCard({ plan, profile, isLoading, onGeneratePlan }: AIPlanC
           </div>
         </div>
         <Button 
-          onClick={onGeneratePlan} 
+          onClick={refreshPlan} 
           disabled={isLoading}
           className="w-full"
         >
@@ -70,10 +64,10 @@ export function AIPlanCard({ plan, profile, isLoading, onGeneratePlan }: AIPlanC
     );
   }
 
-  const totalMacros = plan.macros.protein + plan.macros.carbs + plan.macros.fats;
-  const proteinPercent = Math.round((plan.macros.protein / totalMacros) * 100);
-  const carbsPercent = Math.round((plan.macros.carbs / totalMacros) * 100);
-  const fatsPercent = Math.round((plan.macros.fats / totalMacros) * 100);
+  const totalMacros = healthPlan.macros.protein + healthPlan.macros.carbs + healthPlan.macros.fats;
+  const proteinPercent = Math.round((healthPlan.macros.protein / totalMacros) * 100);
+  const carbsPercent = Math.round((healthPlan.macros.carbs / totalMacros) * 100);
+  const fatsPercent = Math.round((healthPlan.macros.fats / totalMacros) * 100);
 
   return (
     <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6">
@@ -86,7 +80,7 @@ export function AIPlanCard({ plan, profile, isLoading, onGeneratePlan }: AIPlanC
           <div>
             <h3 className="font-semibold">Your AI Plan</h3>
             <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
-              {GOAL_LABELS[profile.healthGoal]}
+              {GOAL_LABELS[healthProfile.healthGoal]}
             </span>
           </div>
         </div>
@@ -101,22 +95,22 @@ export function AIPlanCard({ plan, profile, isLoading, onGeneratePlan }: AIPlanC
       {/* Compact View - Always visible */}
       <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 mb-3">
         <div className="text-center flex-1">
-          <div className="text-2xl font-bold text-primary">{plan.dailyCalories}</div>
+          <div className="text-2xl font-bold text-primary">{healthPlan.dailyCalories}</div>
           <div className="text-xs text-muted-foreground">Daily Cal</div>
         </div>
         <div className="w-px h-8 bg-border" />
         <div className="text-center flex-1">
-          <div className="text-lg font-semibold">{plan.macros.protein}g</div>
+          <div className="text-lg font-semibold">{healthPlan.macros.protein}g</div>
           <div className="text-xs text-muted-foreground">Protein</div>
         </div>
         <div className="w-px h-8 bg-border" />
         <div className="text-center flex-1">
-          <div className="text-lg font-semibold">{plan.macros.carbs}g</div>
+          <div className="text-lg font-semibold">{healthPlan.macros.carbs}g</div>
           <div className="text-xs text-muted-foreground">Carbs</div>
         </div>
         <div className="w-px h-8 bg-border" />
         <div className="text-center flex-1">
-          <div className="text-lg font-semibold">{plan.macros.fats}g</div>
+          <div className="text-lg font-semibold">{healthPlan.macros.fats}g</div>
           <div className="text-xs text-muted-foreground">Fats</div>
         </div>
       </div>
@@ -140,17 +134,17 @@ export function AIPlanCard({ plan, profile, isLoading, onGeneratePlan }: AIPlanC
           <div className="grid grid-cols-3 gap-2">
             <div className="text-center p-2 rounded-xl bg-red-500/10">
               <Drumstick className="w-4 h-4 mx-auto mb-1 text-red-500" />
-              <div className="font-bold">{plan.macros.protein}g</div>
+              <div className="font-bold">{healthPlan.macros.protein}g</div>
               <div className="text-xs text-muted-foreground">Protein</div>
             </div>
             <div className="text-center p-2 rounded-xl bg-amber-500/10">
               <Wheat className="w-4 h-4 mx-auto mb-1 text-amber-500" />
-              <div className="font-bold">{plan.macros.carbs}g</div>
+              <div className="font-bold">{healthPlan.macros.carbs}g</div>
               <div className="text-xs text-muted-foreground">Carbs</div>
             </div>
             <div className="text-center p-2 rounded-xl bg-blue-500/10">
               <Fat className="w-4 h-4 mx-auto mb-1 text-blue-500" />
-              <div className="font-bold">{plan.macros.fats}g</div>
+              <div className="font-bold">{healthPlan.macros.fats}g</div>
               <div className="text-xs text-muted-foreground">Fats</div>
             </div>
           </div>
@@ -161,7 +155,7 @@ export function AIPlanCard({ plan, profile, isLoading, onGeneratePlan }: AIPlanC
               <Lightbulb className="w-4 h-4 text-amber-500" />
               AI Tips
             </div>
-            {plan.recommendations.slice(0, 3).map((tip, index) => (
+            {healthPlan.recommendations.slice(0, 3).map((tip, index) => (
               <div
                 key={index}
                 className="flex gap-2 p-2 rounded-lg bg-muted/50 text-sm"
@@ -176,7 +170,7 @@ export function AIPlanCard({ plan, profile, isLoading, onGeneratePlan }: AIPlanC
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={onGeneratePlan} 
+            onClick={refreshPlan} 
             disabled={isLoading}
             className="w-full"
           >

@@ -12,7 +12,7 @@ import { ProgressCharts } from '@/components/ProgressCharts';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AIPlanCard } from '@/components/AIPlanCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
-import { useHealthCoach } from '@/hooks/useHealthCoach';
+import { useUserPlan } from '@/contexts/UserPlanContext';
 import { motivationalQuotes } from '@/data/foodDatabase';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,13 +47,8 @@ export default function Dashboard() {
     addWater,
   } = useWellnessData();
 
-  const {
-    healthProfile,
-    healthPlan,
-    isLoading: isGenerating,
-    generatePlan,
-    saveProfile,
-  } = useHealthCoach();
+  // Use the global user plan context (data synced from database)
+  useUserPlan();
 
   const { showTour, completeTour } = useTourStatus();
   useEffect(() => {
@@ -94,12 +89,6 @@ export default function Dashboard() {
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, []);
-
-  const handleGeneratePlan = async () => {
-    if (healthProfile) {
-      await generatePlan(healthProfile);
-    }
-  };
 
   // Get data for selected day
   const getWaterForDay = (day: 'today' | 'yesterday') => {
@@ -187,12 +176,7 @@ export default function Dashboard() {
       </header>
 
       {/* AI Plan Card */}
-      <AIPlanCard
-        plan={healthPlan}
-        profile={healthProfile}
-        isLoading={isGenerating}
-        onGeneratePlan={handleGeneratePlan}
-      />
+      <AIPlanCard />
 
       {/* Progress Rings with Day Navigation */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6" delay={0.1}>
