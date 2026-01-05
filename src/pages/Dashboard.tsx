@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, subDays } from 'date-fns';
-import { Droplets, Utensils, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Droplets, Utensils, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ProgressRing';
 import { QuickLogButton } from '@/components/QuickLogButton';
@@ -296,23 +296,8 @@ export default function Dashboard() {
 
       {/* Daily Challenges */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6" delay={0.3}>
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <h2 className="text-base sm:text-lg font-semibold">Daily Challenges</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setIsRefreshing(true);
-              setRefreshKey(prev => prev + 1);
-              setTimeout(() => setIsRefreshing(false), 600);
-            }}
-            className="h-8 w-8 p-0"
-            disabled={isRefreshing}
-          >
-            <RefreshCw className={`w-4 h-4 transition-transform ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-        <div className="space-y-3" key={refreshKey}>
+        <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Daily Challenges</h2>
+        <div className="space-y-3">
           <ChallengeItem
             title="Drink 8 glasses of water"
             progress={Math.min(Math.round((todayWater / 2000) * 8), 8)}
