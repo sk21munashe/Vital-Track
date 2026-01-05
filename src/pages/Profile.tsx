@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, User, Star, Flame, Edit2, Settings } from 'lucide-react';
+import { ChevronLeft, User, Star, Flame, Edit2, Settings, Target, Droplets, Utensils, Sparkles, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardCard } from '@/components/DashboardCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
@@ -14,15 +14,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Profile() {
   const navigate = useNavigate();
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showEditGoals, setShowEditGoals] = useState(false);
   const [editName, setEditName] = useState('');
+  const [editGoals, setEditGoals] = useState({ water: '', calories: '' });
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const { profile, updateProfile, getTodayPoints } = useWellnessData();
+  const { profile, updateProfile, updateGoals, getTodayPoints } = useWellnessData();
 
   // Sticky header observer
   useEffect(() => {
@@ -45,6 +49,72 @@ export default function Profile() {
       updateProfile({ name: editName.trim() });
       setShowEditProfile(false);
       toast.success('Profile updated!');
+    }
+  };
+
+  const handleUpdateGoals = () => {
+    const water = editGoals.water ? parseInt(editGoals.water) : profile.goals.waterGoal;
+    const calories = editGoals.calories ? parseInt(editGoals.calories) : profile.goals.calorieGoal;
+
+    updateGoals({ waterGoal: water, calorieGoal: calories });
+    setShowEditGoals(false);
+    toast.success('Goals updated!');
+  };
+
+  const handleAISuggestGoals = async () => {
+    setIsLoadingAI(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-health-plan', {
+        body: {
+          prompt: `Suggest daily health goals for a person. Return ONLY a JSON object with these exact fields:
+          {
+            "waterGoal": <number in ml, typically 2000-3500>,
+            "calorieGoal": <number, typically 1500-2500>,
+            "reasoning": "<brief explanation>"
+          }
+          Consider general healthy adult recommendations.`
+        }
+      });
+
+      if (error) throw error;
+
+      // Try to parse the response
+      let suggestions;
+      if (typeof data === 'string') {
+        // Try to extract JSON from the response
+        const jsonMatch = data.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          suggestions = JSON.parse(jsonMatch[0]);
+        }
+      } else if (data?.response) {
+        const jsonMatch = data.response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          suggestions = JSON.parse(jsonMatch[0]);
+        }
+      } else {
+        suggestions = data;
+      }
+
+      if (suggestions?.waterGoal && suggestions?.calorieGoal) {
+        setEditGoals({
+          water: suggestions.waterGoal.toString(),
+          calories: suggestions.calorieGoal.toString()
+        });
+        toast.success('AI suggestions loaded!', {
+          description: suggestions.reasoning || 'Personalized goals ready to save'
+        });
+      } else {
+        // Fallback to sensible defaults
+        setEditGoals({ water: '2500', calories: '2000' });
+        toast.success('Suggested healthy defaults loaded!');
+      }
+    } catch (error) {
+      console.error('AI suggestion error:', error);
+      // Fallback to sensible defaults
+      setEditGoals({ water: '2500', calories: '2000' });
+      toast.info('Using recommended healthy defaults');
+    } finally {
+      setIsLoadingAI(false);
     }
   };
 
@@ -111,6 +181,58 @@ export default function Profile() {
         </div>
       </DashboardCard>
 
+      {/* Daily Goals Section */}
+      <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+            <Target className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            Daily Goals
+          </h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setEditGoals({
+                water: profile.goals.waterGoal.toString(),
+                calories: profile.goals.calorieGoal.toString(),
+              });
+              setShowEditGoals(true);
+            }}
+          >
+            <Edit2 className="w-4 h-4 mr-1" />
+            Edit
+          </Button>
+        </div>
+
+        <div className="space-y-2 sm:space-y-3">
+          <DashboardCard className="flex items-center justify-between p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-water/20 flex items-center justify-center">
+                <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-water" />
+              </div>
+              <div>
+                <p className="text-sm sm:text-base font-medium">Water Intake</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Daily hydration goal</p>
+              </div>
+            </div>
+            <span className="text-base sm:text-lg font-bold text-water">{profile.goals.waterGoal / 1000}L</span>
+          </DashboardCard>
+
+          <DashboardCard className="flex items-center justify-between p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-nutrition/20 flex items-center justify-center">
+                <Utensils className="w-4 h-4 sm:w-5 sm:h-5 text-nutrition" />
+              </div>
+              <div>
+                <p className="text-sm sm:text-base font-medium">Calories</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Daily calorie target</p>
+              </div>
+            </div>
+            <span className="text-base sm:text-lg font-bold text-nutrition">{profile.goals.calorieGoal}</span>
+          </DashboardCard>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
         <h2 className="text-base sm:text-lg font-semibold mb-3">Today's Points</h2>
@@ -143,6 +265,62 @@ export default function Profile() {
             </div>
             <Button onClick={handleUpdateProfile} className="w-full">
               Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Goals Dialog */}
+      <Dialog open={showEditGoals} onOpenChange={setShowEditGoals}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set Daily Goals</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {/* AI Suggest Button */}
+            <Button
+              variant="outline"
+              onClick={handleAISuggestGoals}
+              disabled={isLoadingAI}
+              className="w-full border-primary/30 hover:bg-primary/10"
+            >
+              {isLoadingAI ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 mr-2 text-primary" />
+              )}
+              {isLoadingAI ? 'Getting AI Suggestions...' : 'Get AI Suggested Goals'}
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">or set manually</span>
+              </div>
+            </div>
+
+            <div>
+              <Label>Daily Water Goal (ml)</Label>
+              <Input
+                type="number"
+                value={editGoals.water}
+                onChange={(e) => setEditGoals(prev => ({ ...prev, water: e.target.value }))}
+                placeholder="e.g., 2000"
+              />
+            </div>
+            <div>
+              <Label>Daily Calorie Goal</Label>
+              <Input
+                type="number"
+                value={editGoals.calories}
+                onChange={(e) => setEditGoals(prev => ({ ...prev, calories: e.target.value }))}
+                placeholder="e.g., 2000"
+              />
+            </div>
+            <Button onClick={handleUpdateGoals} className="w-full">
+              Save Goals
             </Button>
           </div>
         </DialogContent>
