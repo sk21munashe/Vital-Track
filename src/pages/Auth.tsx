@@ -19,10 +19,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { HealthProfile } from '@/types/healthCoach';
+import { HealthProfile, HealthPlan } from '@/types/healthCoach';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { MealPlanReport } from '@/components/MealPlanReport';
 
 const ONBOARDING_STEPS = [
   { id: 'personal', title: 'About You', icon: User },
@@ -57,11 +58,13 @@ const ACTIVITY_LEVELS = [
 
 export default function Auth() {
   const navigate = useNavigate();
-  const [authMode, setAuthMode] = useState<'auth' | 'onboarding'>('auth');
+  const [authMode, setAuthMode] = useState<'auth' | 'onboarding' | 'plan_report'>('auth');
   const [isLogin, setIsLogin] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [generatedPlan, setGeneratedPlan] = useState<HealthPlan | null>(null);
   
   const [formData, setFormData] = useState<Partial<HealthProfile>>({
     gender: 'male',
@@ -197,8 +200,47 @@ export default function Auth() {
       dietPreference: formData.dietPreference || 'standard',
       activityLevel: formData.activityLevel || 'moderate',
     };
+    
+    // Save profile to localStorage
     localStorage.setItem('wellness_health_profile', JSON.stringify(completeProfile));
     
+    // Generate AI plan
+    setIsGeneratingPlan(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-health-plan`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify(completeProfile),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate plan');
+      }
+
+      const plan: HealthPlan = await response.json();
+      setGeneratedPlan(plan);
+      localStorage.setItem('wellness_health_plan', JSON.stringify(plan));
+      
+      // Show the meal plan report
+      setAuthMode('plan_report');
+    } catch (error) {
+      console.error('Error generating plan:', error);
+      toast.error('Failed to generate plan. Proceeding to dashboard.');
+      // Still complete onboarding even if plan generation fails
+      await finalizeOnboarding();
+    } finally {
+      setIsGeneratingPlan(false);
+    }
+  };
+
+  const finalizeOnboarding = async () => {
     // Update onboarding_completed in database
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
@@ -210,8 +252,13 @@ export default function Auth() {
     
     // Set flag for welcome tour
     sessionStorage.setItem('just_completed_onboarding', 'true');
-    toast.success('Profile saved! Welcome to your wellness journey!');
+    localStorage.setItem('wellness_onboarding_complete', 'true');
+    toast.success('Welcome to your wellness journey!');
     navigate('/');
+  };
+
+  const handleStartPlan = async () => {
+    await finalizeOnboarding();
   };
 
   const isStepValid = () => {
@@ -229,6 +276,28 @@ export default function Auth() {
     center: { x: 0, opacity: 1 },
     exit: (direction: number) => ({ x: direction < 0 ? 300 : -300, opacity: 0 }),
   };
+
+  // Meal Plan Report (after plan generation)
+  if (authMode === 'plan_report' && generatedPlan) {
+    const completeProfile: HealthProfile = {
+      gender: formData.gender || 'male',
+      age: formData.age || 25,
+      height: formData.height || 170,
+      weight: formData.weight || 70,
+      units: formData.units || 'metric',
+      healthGoal: formData.healthGoal || 'maintenance',
+      dietPreference: formData.dietPreference || 'standard',
+      activityLevel: formData.activityLevel || 'moderate',
+    };
+    
+    return (
+      <MealPlanReport 
+        profile={completeProfile} 
+        plan={generatedPlan} 
+        onStartPlan={handleStartPlan}
+      />
+    );
+  }
 
   // Onboarding Flow (after authentication)
   if (authMode === 'onboarding') {
@@ -491,11 +560,20 @@ export default function Auth() {
             ) : (
               <Button
                 onClick={handleCompleteOnboarding}
-                disabled={!isStepValid()}
+                disabled={!isStepValid() || isGeneratingPlan}
                 className="flex-1"
               >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Complete Setup
+                {isGeneratingPlan ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating Your Plan...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate My Plan
+                  </>
+                )}
               </Button>
             )}
           </div>
