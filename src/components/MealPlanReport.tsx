@@ -6,19 +6,18 @@ import {
   ChevronUp,
   Flame,
   Droplets,
-  Apple,
   Dumbbell,
-  ShoppingCart,
   Lightbulb,
   Calendar,
   User,
   Target,
-  TrendingUp,
-  Utensils
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { HealthProfile, HealthPlan, DayPlan } from '@/types/healthCoach';
+import { HealthProfile, HealthPlan } from '@/types/healthCoach';
+import { GroceryList } from '@/components/GroceryList';
+import { MealSwapButton } from '@/components/MealSwapButton';
 import { cn } from '@/lib/utils';
 
 interface MealPlanReportProps {
@@ -59,30 +58,6 @@ export function MealPlanReport({ profile, plan, onStartPlan }: MealPlanReportPro
   
   const goalInfo = GOAL_LABELS[profile.healthGoal] || GOAL_LABELS.maintenance;
   const dietLabel = DIET_LABELS[profile.dietPreference] || 'Balanced';
-  
-  // Generate a starter shopping list from the first 3 days
-  const generateShoppingList = () => {
-    const items = new Set<string>();
-    const foodKeywords = ['chicken', 'salmon', 'eggs', 'oatmeal', 'rice', 'vegetables', 'fruits', 'nuts', 'yogurt', 'bread', 'pasta', 'beans', 'tofu', 'cheese', 'milk', 'olive oil', 'avocado', 'spinach', 'broccoli', 'sweet potato', 'quinoa', 'berries', 'banana', 'almonds', 'peanut butter'];
-    
-    plan.weeklyPlan.slice(0, 3).forEach(day => {
-      const allMeals = `${day.meals.breakfast} ${day.meals.lunch} ${day.meals.dinner} ${day.meals.snacks}`.toLowerCase();
-      foodKeywords.forEach(keyword => {
-        if (allMeals.includes(keyword)) {
-          items.add(keyword.charAt(0).toUpperCase() + keyword.slice(1));
-        }
-      });
-    });
-    
-    // Add some basics if list is short
-    if (items.size < 8) {
-      ['Fresh vegetables', 'Fruits', 'Lean protein', 'Whole grains', 'Healthy oils'].forEach(item => items.add(item));
-    }
-    
-    return Array.from(items).slice(0, 12);
-  };
-  
-  const shoppingList = generateShoppingList();
   
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -264,18 +239,23 @@ export function MealPlanReport({ profile, plan, onStartPlan }: MealPlanReportPro
                     >
                       {/* Meals */}
                       <div className="space-y-2">
-                        {[
-                          { label: 'Breakfast', emoji: '🌅', value: day.meals.breakfast },
-                          { label: 'Lunch', emoji: '☀️', value: day.meals.lunch },
-                          { label: 'Dinner', emoji: '🌙', value: day.meals.dinner },
-                          { label: 'Snacks', emoji: '🍎', value: day.meals.snacks },
-                        ].map((meal) => (
-                          <div key={meal.label} className="flex gap-2 text-sm">
+                        {([
+                          { label: 'Breakfast', emoji: '🌅', value: day.meals.breakfast, type: 'breakfast' as const },
+                          { label: 'Lunch', emoji: '☀️', value: day.meals.lunch, type: 'lunch' as const },
+                          { label: 'Dinner', emoji: '🌙', value: day.meals.dinner, type: 'dinner' as const },
+                          { label: 'Snacks', emoji: '🍎', value: day.meals.snacks, type: 'snacks' as const },
+                        ]).map((meal) => (
+                          <div key={meal.label} className="flex gap-2 text-sm group">
                             <span className="text-base">{meal.emoji}</span>
-                            <div>
+                            <div className="flex-1">
                               <p className="font-medium text-xs text-muted-foreground">{meal.label}</p>
                               <p className="text-foreground">{meal.value}</p>
                             </div>
+                            <MealSwapButton
+                              dayIndex={index}
+                              mealType={meal.type}
+                              currentMeal={meal.value}
+                            />
                           </div>
                         ))}
                       </div>
@@ -321,30 +301,20 @@ export function MealPlanReport({ profile, plan, onStartPlan }: MealPlanReportPro
             </ul>
           </motion.div>
 
-          {/* Shopping List */}
+          {/* Shopping List - Now AI Powered */}
           <motion.div 
             variants={itemVariants}
             className="bg-gradient-to-br from-emerald-500/10 to-green-500/5 rounded-2xl p-4 border border-emerald-500/20"
           >
-            <div className="flex items-center gap-2 mb-3">
-              <ShoppingCart className="w-4 h-4 text-emerald-500" />
-              <h2 className="font-semibold text-sm">Starter Shopping List</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-sm flex items-center gap-2">
+                🛒 Weekly Grocery List
+              </h2>
+              <GroceryList />
             </div>
-            
-            <div className="grid grid-cols-2 gap-2">
-              {shoppingList.map((item, index) => (
-                <motion.div
-                  key={item}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 1 + index * 0.05 }}
-                  className="flex items-center gap-2 p-2 bg-background/60 rounded-lg text-sm"
-                >
-                  <div className="w-4 h-4 rounded border border-emerald-500/50 flex-shrink-0" />
-                  <span className="truncate">{item}</span>
-                </motion.div>
-              ))}
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Generate a detailed shopping list with quantities based on your meal plan.
+            </p>
           </motion.div>
 
           {/* Stats Footer */}

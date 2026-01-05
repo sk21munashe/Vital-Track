@@ -14,6 +14,7 @@ interface UserPlanContextType {
   generatePlan: (profile: HealthProfile) => Promise<HealthPlan>;
   refreshPlan: () => Promise<void>;
   resetPlan: () => Promise<void>;
+  updateMeal: (dayIndex: number, mealType: 'breakfast' | 'lunch' | 'dinner' | 'snacks', newMeal: string) => Promise<void>;
 }
 
 const UserPlanContext = createContext<UserPlanContextType | undefined>(undefined);
@@ -226,6 +227,35 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
     }
   }, [userId]);
 
+  // Update a specific meal in the plan
+  const updateMeal = useCallback(async (
+    dayIndex: number, 
+    mealType: 'breakfast' | 'lunch' | 'dinner' | 'snacks', 
+    newMeal: string
+  ) => {
+    if (!healthPlan) {
+      throw new Error('No health plan found');
+    }
+
+    const updatedPlan = {
+      ...healthPlan,
+      weeklyPlan: healthPlan.weeklyPlan.map((day, idx) => {
+        if (idx === dayIndex) {
+          return {
+            ...day,
+            meals: {
+              ...day.meals,
+              [mealType]: newMeal,
+            },
+          };
+        }
+        return day;
+      }),
+    };
+
+    await savePlan(updatedPlan);
+  }, [healthPlan, savePlan]);
+
   return (
     <UserPlanContext.Provider
       value={{
@@ -239,6 +269,7 @@ export function UserPlanProvider({ children }: { children: React.ReactNode }) {
         generatePlan,
         refreshPlan,
         resetPlan,
+        updateMeal,
       }}
     >
       {children}
