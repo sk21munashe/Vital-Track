@@ -81,12 +81,12 @@ export default function Auth() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Check if onboarding is complete
-        const storedProfile = localStorage.getItem('wellness_health_profile');
-        if (storedProfile) {
-          navigate('/');
-        } else {
+        // Check if this is a new sign-up that needs onboarding
+        const isNewSignup = sessionStorage.getItem('is_new_signup');
+        if (isNewSignup === 'true') {
           setAuthMode('onboarding');
+        } else {
+          navigate('/');
         }
       }
     };
@@ -94,11 +94,11 @@ export default function Auth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        const storedProfile = localStorage.getItem('wellness_health_profile');
-        if (storedProfile) {
-          navigate('/');
-        } else {
+        const isNewSignup = sessionStorage.getItem('is_new_signup');
+        if (isNewSignup === 'true') {
           setAuthMode('onboarding');
+        } else {
+          navigate('/');
         }
       }
     });
@@ -151,6 +151,8 @@ export default function Auth() {
           },
         });
         if (error) throw error;
+        // Mark this as a new signup so onboarding and tour show
+        sessionStorage.setItem('is_new_signup', 'true');
         toast.success('Account created! Let\'s personalize your experience.');
       }
     } catch (error: any) {
@@ -172,6 +174,8 @@ export default function Auth() {
       activityLevel: formData.activityLevel || 'moderate',
     };
     localStorage.setItem('wellness_health_profile', JSON.stringify(completeProfile));
+    // Clear the new signup flag and set onboarding complete for tour
+    sessionStorage.removeItem('is_new_signup');
     sessionStorage.setItem('just_completed_onboarding', 'true');
     toast.success('Profile saved! Welcome to your wellness journey!');
     navigate('/');
