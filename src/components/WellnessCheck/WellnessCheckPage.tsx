@@ -257,11 +257,10 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: '100%' }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      className="fixed inset-0 z-50 bg-background flex flex-col"
+      className="flex-1 flex flex-col min-h-0 bg-background"
     >
       {/* Header */}
       <header className="flex-shrink-0 px-4 py-3 border-b border-border/50 bg-card/50 backdrop-blur-sm">
