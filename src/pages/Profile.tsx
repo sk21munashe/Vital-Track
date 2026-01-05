@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, User, Star, Flame, Edit2, Settings, Target, Droplets, Utensils, Sparkles, Loader2 } from 'lucide-react';
+import { ChevronLeft, User, Star, Flame, Edit2, Settings, Target, Droplets, Utensils, Sparkles, Loader2, UtensilsCrossed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardCard } from '@/components/DashboardCard';
+import { MealPlanSection } from '@/components/MealPlanSection';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import { useAchievements } from '@/hooks/useAchievements';
 import { AchievementsSection } from '@/components/AchievementsSection';
@@ -235,6 +236,15 @@ export default function Profile() {
           </motion.div>
           <p className="text-xs sm:text-sm opacity-90 mt-1">points earned today</p>
         </div>
+      </div>
+
+      {/* AI Meal Plan Section */}
+      <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
+        <h2 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
+          <UtensilsCrossed className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          My Meal Plan
+        </h2>
+        <MealPlanSection />
       </div>
 
       {/* Daily Goals Section */}
