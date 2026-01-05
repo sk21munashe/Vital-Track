@@ -65,6 +65,11 @@ export default {
           light: "hsl(var(--fitness-light))",
           dark: "hsl(var(--fitness-dark))",
         },
+        health: {
+          DEFAULT: "hsl(var(--health))",
+          light: "hsl(var(--health-light))",
+          dark: "hsl(var(--health-dark))",
+        },
         points: "hsl(var(--points))",
         streak: "hsl(var(--streak))",
         sidebar: {
@@ -93,6 +98,7 @@ export default {
         'water': 'var(--shadow-water)',
         'nutrition': 'var(--shadow-nutrition)',
         'fitness': 'var(--shadow-fitness)',
+        'health': 'var(--shadow-health)',
       },
       keyframes: {
         "accordion-down": {
