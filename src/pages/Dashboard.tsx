@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, subDays } from 'date-fns';
-import { Droplets, Utensils, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { Droplets, Utensils, ChevronLeft, ChevronRight, Heart, Flame } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProgressRing } from '@/components/ProgressRing';
 import { StreakBadge } from '@/components/StreakBadge';
@@ -24,6 +24,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { WelcomeTour, useTourStatus } from '@/components/WelcomeTour';
 import { WellnessCheckPage } from '@/components/WellnessCheck';
+import { GoalCard } from '@/components/GoalCard';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -184,9 +185,9 @@ export default function Dashboard() {
       {/* AI Plan Card */}
       <AIPlanCard />
 
-      {/* Progress Rings with Day Navigation */}
-      <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6" delay={0.1}>
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
+      {/* Today's Progress - Interactive Goal Cards */}
+      <div className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6">
+        <div className="flex items-center justify-between mb-4">
           <Button
             variant="ghost"
             size="icon"
@@ -233,48 +234,38 @@ export default function Dashboard() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: selectedDay === 'yesterday' ? -50 : 50 }}
             transition={{ duration: 0.3 }}
-            className="flex justify-center items-center gap-6"
+            className="grid grid-cols-3 gap-3"
           >
-            <ProgressRing
-              progress={waterProgress}
+            <GoalCard
+              icon={Droplets}
+              title="Water"
+              current={Math.round(displayWater)}
+              goal={profile.goals.waterGoal}
+              unit="ml"
               variant="water"
-              label="Water"
-              value={`${Math.round(displayWater / 1000 * 10) / 10}L`}
-              subLabel={`of ${profile.goals.waterGoal / 1000}L`}
-              size={100}
-              className="sm:hidden"
+              onClick={() => setShowQuickAdd(true)}
             />
-            <ProgressRing
-              progress={caloriesProgress}
+            <GoalCard
+              icon={Utensils}
+              title="Calories"
+              current={displayCalories}
+              goal={profile.goals.calorieGoal}
+              unit=""
               variant="nutrition"
-              label="Calories"
-              value={`${displayCalories}`}
-              subLabel={`of ${profile.goals.calorieGoal}`}
-              size={100}
-              className="sm:hidden"
+              onClick={() => navigate('/calories')}
             />
-            {/* Larger screens */}
-            <ProgressRing
-              progress={waterProgress}
-              variant="water"
-              label="Water"
-              value={`${Math.round(displayWater / 1000 * 10) / 10}L`}
-              subLabel={`of ${profile.goals.waterGoal / 1000}L`}
-              size={140}
-              className="hidden sm:flex"
-            />
-            <ProgressRing
-              progress={caloriesProgress}
-              variant="nutrition"
-              label="Calories"
-              value={`${displayCalories}`}
-              subLabel={`of ${profile.goals.calorieGoal}`}
-              size={140}
-              className="hidden sm:flex"
+            <GoalCard
+              icon={Flame}
+              title="Macros"
+              current={getTodayMealsLogged()}
+              goal={3}
+              unit=" meals"
+              variant="macros"
+              onClick={() => navigate('/calories')}
             />
           </motion.div>
         </AnimatePresence>
-      </DashboardCard>
+      </div>
 
       {/* Points */}
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6 flex justify-center">
