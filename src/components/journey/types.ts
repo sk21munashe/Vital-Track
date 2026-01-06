@@ -1,4 +1,4 @@
-export type ArchitectureStyle = 'scientific' | 'fun' | 'nature' | 'minimalist' | 'space';
+export type ArchitectureStyle = 'space' | 'nature' | 'city' | 'ocean' | 'mountain';
 
 export interface JourneyData {
   water: {

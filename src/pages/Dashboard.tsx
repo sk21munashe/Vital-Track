@@ -14,7 +14,18 @@ import {
 } from '@/components/ui/dialog';
 import { WelcomeTour, useTourStatus } from '@/components/WelcomeTour';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { JourneyPath, ProgressTrends, ThemeDropdown, JourneyData, ArchitectureStyle } from '@/components/journey';
+import { 
+  ThemeDropdown, 
+  ProgressTrends, 
+  TodaysFocus,
+  SpaceJourney,
+  NatureJourney,
+  CityJourney,
+  OceanJourney,
+  MountainJourney,
+  JourneyData, 
+  ArchitectureStyle 
+} from '@/components/journey';
 
 const THEME_STORAGE_KEY = 'journey-theme';
 
@@ -23,7 +34,7 @@ export default function Dashboard() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [theme, setTheme] = useState<ArchitectureStyle>(() => {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    return (saved as ArchitectureStyle) || 'nature';
+    return (saved as ArchitectureStyle) || 'space';
   });
 
   const {
@@ -41,12 +52,10 @@ export default function Dashboard() {
   const todayWater = getTodayWater();
   const todayCalories = getTodayCalories();
 
-  // Save theme preference
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
-  // Generate 7-day history
   const journeyData: JourneyData = useMemo(() => {
     const today = new Date();
     const waterHistory: { date: string; value: number }[] = [];
@@ -89,23 +98,39 @@ export default function Dashboard() {
     setShowQuickAdd(false);
   };
 
+  const renderJourney = () => {
+    const props = {
+      data: journeyData,
+      onWaterClick: () => setShowQuickAdd(true),
+      onCaloriesClick: () => navigate('/calories'),
+    };
+
+    switch (theme) {
+      case 'space': return <SpaceJourney {...props} />;
+      case 'nature': return <NatureJourney {...props} />;
+      case 'city': return <CityJourney {...props} />;
+      case 'ocean': return <OceanJourney {...props} />;
+      case 'mountain': return <MountainJourney {...props} />;
+      default: return <SpaceJourney {...props} />;
+    }
+  };
+
   return (
     <>
       {showTour && <WelcomeTour onComplete={completeTour} />}
 
-      <div className="h-full w-full flex flex-col bg-background overflow-hidden">
-        {/* Header - Date, Streak, Dark Mode, Wellness */}
-        <header className="flex-shrink-0 flex items-center justify-between px-4 pt-4 pb-2">
+      <div className="h-full w-full flex flex-col bg-background overflow-y-auto">
+        {/* Fixed Header */}
+        <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-lg border-b border-border/30">
           <div className="flex items-center gap-3">
             <motion.p
-              className="text-sm font-medium text-foreground"
+              className="text-sm font-semibold text-foreground"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
               {format(new Date(), 'EEEE, MMMM d')}
             </motion.p>
             
-            {/* Streak Badge */}
             {profile.streak > 0 && (
               <motion.div 
                 className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-streak/10"
@@ -125,35 +150,34 @@ export default function Dashboard() {
               className="w-9 h-9 flex items-center justify-center"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
             >
               <Heart className="w-6 h-6 text-destructive fill-destructive" />
             </motion.button>
           </div>
         </header>
 
-        {/* Section 1: Today's Journey (60%) */}
-        <div className="flex-1 min-h-0 px-4 pb-2" style={{ flex: '0 0 55%' }}>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-foreground">Today's Journey</h2>
-            <ThemeDropdown current={theme} onChange={setTheme} />
-          </div>
-          
-          <div className="h-[calc(100%-2rem)]">
-            <JourneyPath
-              data={journeyData}
-              theme={theme}
-              onWaterClick={() => setShowQuickAdd(true)}
-              onCaloriesClick={() => navigate('/calories')}
-            />
-          </div>
-        </div>
+        {/* Scrollable Content */}
+        <div className="flex-1 flex flex-col gap-6 p-4 pb-24">
+          {/* Section 1: Journey (60%) */}
+          <section className="min-h-[55vh]">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-foreground">Today's Journey</h2>
+              <ThemeDropdown current={theme} onChange={setTheme} />
+            </div>
+            <div className="h-[50vh] rounded-2xl overflow-hidden shadow-lg">
+              {renderJourney()}
+            </div>
+          </section>
 
-        {/* Section 2: Progress Trends (40%) */}
-        <div className="flex-1 min-h-0 px-4 pb-4" style={{ flex: '0 0 40%' }}>
-          <ProgressTrends data={journeyData} />
+          {/* Section 2: Today's Focus (20%) */}
+          <section className="py-4">
+            <TodaysFocus data={journeyData} />
+          </section>
+
+          {/* Section 3: Progress Trends (20%) */}
+          <section className="min-h-[30vh]">
+            <ProgressTrends data={journeyData} />
+          </section>
         </div>
 
         {/* Quick Add Water Dialog */}
