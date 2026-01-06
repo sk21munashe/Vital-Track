@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Droplets, Plus, Target } from 'lucide-react';
+import { ChevronLeft, Droplets, Plus, Target, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format, subDays } from 'date-fns';
 
 import { DashboardCard } from '@/components/DashboardCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import { useAchievements } from '@/hooks/useAchievements';
+import { useAIPlanSync } from '@/hooks/useAIPlanSync';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -52,6 +53,7 @@ export default function WaterTracker() {
   } = useWellnessData();
 
   const { recordHydrationGoalMet } = useAchievements();
+  const { hasAIPlan } = useAIPlanSync();
 
   const todayWater = getTodayWater();
   const weekWater = getWeekWater();
@@ -194,10 +196,13 @@ export default function WaterTracker() {
           className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-water/10 hover:bg-water/20 border border-water/20 transition-all group"
         >
           <Target className="w-4 h-4 text-water group-hover:scale-110 transition-transform" />
-          <span className="text-sm font-medium text-water">Set Daily Goal</span>
+          <span className="text-sm font-medium text-water">
+            {hasAIPlan ? 'AI Plan Goal' : 'Set Daily Goal'}
+          </span>
           <span className="text-xs text-muted-foreground ml-1">
             ({profile.goals.waterGoal / 1000}L)
           </span>
+          {hasAIPlan && <Sparkles className="w-3 h-3 text-water" />}
         </button>
       </div>
 
