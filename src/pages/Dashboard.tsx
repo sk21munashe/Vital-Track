@@ -15,27 +15,15 @@ import {
 import { WelcomeTour, useTourStatus } from '@/components/WelcomeTour';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { 
-  ThemeDropdown, 
   ProgressTrends, 
   TodaysFocus,
   SpaceJourney,
-  NatureJourney,
-  CityJourney,
-  OceanJourney,
-  MountainJourney,
   JourneyData, 
-  ArchitectureStyle 
 } from '@/components/journey';
-
-const THEME_STORAGE_KEY = 'journey-theme';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [showQuickAdd, setShowQuickAdd] = useState(false);
-  const [theme, setTheme] = useState<ArchitectureStyle>(() => {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    return (saved as ArchitectureStyle) || 'space';
-  });
 
   const {
     profile,
@@ -52,9 +40,6 @@ export default function Dashboard() {
   const todayWater = getTodayWater();
   const todayCalories = getTodayCalories();
 
-  useEffect(() => {
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme]);
 
   const journeyData: JourneyData = useMemo(() => {
     const today = new Date();
@@ -98,22 +83,6 @@ export default function Dashboard() {
     setShowQuickAdd(false);
   };
 
-  const renderJourney = () => {
-    const props = {
-      data: journeyData,
-      onWaterClick: () => setShowQuickAdd(true),
-      onCaloriesClick: () => navigate('/calories'),
-    };
-
-    switch (theme) {
-      case 'space': return <SpaceJourney {...props} />;
-      case 'nature': return <NatureJourney {...props} />;
-      case 'city': return <CityJourney {...props} />;
-      case 'ocean': return <OceanJourney {...props} />;
-      case 'mountain': return <MountainJourney {...props} />;
-      default: return <SpaceJourney {...props} />;
-    }
-  };
 
   return (
     <>
@@ -160,12 +129,13 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col gap-6 p-4 pb-24">
           {/* Section 1: Journey (60%) */}
           <section className="min-h-[55vh]">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-foreground">Today's Journey</h2>
-              <ThemeDropdown current={theme} onChange={setTheme} />
-            </div>
+            <h2 className="text-lg font-bold text-foreground mb-3">Today's Journey</h2>
             <div className="h-[50vh] rounded-2xl overflow-hidden shadow-lg">
-              {renderJourney()}
+              <SpaceJourney 
+                data={journeyData}
+                onWaterClick={() => setShowQuickAdd(true)}
+                onCaloriesClick={() => navigate('/calories')}
+              />
             </div>
           </section>
 
