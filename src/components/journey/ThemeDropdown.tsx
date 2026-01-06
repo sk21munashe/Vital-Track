@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Rocket, TreePine, Building2, Waves, Mountain } from 'lucide-react';
 import { ArchitectureStyle } from './types';
 
 interface ThemeDropdownProps {
   current: ArchitectureStyle;
-  onChange: (theme: ArchitectureStyle) => void;
+  onChange: (style: ArchitectureStyle) => void;
 }
 
-const themes: { id: ArchitectureStyle; label: string; icon: string }[] = [
-  { id: 'nature', label: 'Nature', icon: '🌿' },
-  { id: 'space', label: 'Space', icon: '🚀' },
-  { id: 'fun', label: 'Fun', icon: '🎮' },
-  { id: 'minimalist', label: 'Minimal', icon: '◾' },
-  { id: 'scientific', label: 'City', icon: '🏙️' },
+const themes: { id: ArchitectureStyle; label: string; icon: React.ReactNode; color: string }[] = [
+  { id: 'space', label: 'Space', icon: <Rocket className="w-4 h-4" />, color: 'text-purple-500' },
+  { id: 'nature', label: 'Nature', icon: <TreePine className="w-4 h-4" />, color: 'text-emerald-500' },
+  { id: 'city', label: 'City', icon: <Building2 className="w-4 h-4" />, color: 'text-amber-500' },
+  { id: 'ocean', label: 'Ocean', icon: <Waves className="w-4 h-4" />, color: 'text-cyan-500' },
+  { id: 'mountain', label: 'Mountain', icon: <Mountain className="w-4 h-4" />, color: 'text-slate-500' },
 ];
 
 export function ThemeDropdown({ current, onChange }: ThemeDropdownProps) {
@@ -24,17 +24,17 @@ export function ThemeDropdown({ current, onChange }: ThemeDropdownProps) {
     <div className="relative">
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/80 backdrop-blur-sm border border-border/50 hover:bg-card transition-colors"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
-        <span className="text-sm">{currentTheme.icon}</span>
-        <span className="text-xs font-medium text-primary">{currentTheme.label}</span>
+        <span className={currentTheme.color}>{currentTheme.icon}</span>
+        <span className="text-xs font-medium text-foreground">{currentTheme.label}</span>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown className="w-3 h-3 text-primary" />
+          <ChevronDown className="w-3 h-3 text-muted-foreground" />
         </motion.div>
       </motion.button>
 
@@ -49,10 +49,10 @@ export function ThemeDropdown({ current, onChange }: ThemeDropdownProps) {
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
             />
-            
+
             {/* Dropdown */}
             <motion.div
-              className="absolute right-0 top-full mt-2 z-50 bg-card rounded-xl shadow-lg border border-border overflow-hidden min-w-[140px]"
+              className="absolute right-0 top-full mt-2 z-50 min-w-40 bg-card rounded-xl border border-border shadow-lg overflow-hidden"
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -65,17 +65,20 @@ export function ThemeDropdown({ current, onChange }: ThemeDropdownProps) {
                     onChange(theme.id);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                     current === theme.id 
-                      ? 'bg-primary/10 text-primary' 
-                      : 'hover:bg-muted text-foreground'
+                      ? 'bg-primary/10' 
+                      : 'hover:bg-muted/50'
                   }`}
                   whileHover={{ x: 2 }}
                 >
-                  <span className="text-sm">{theme.icon}</span>
-                  <span className="text-xs font-medium">{theme.label}</span>
+                  <span className={theme.color}>{theme.icon}</span>
+                  <span className="text-sm font-medium text-foreground">{theme.label}</span>
                   {current === theme.id && (
-                    <span className="ml-auto text-primary text-xs">✓</span>
+                    <motion.div 
+                      className="ml-auto w-2 h-2 rounded-full bg-primary"
+                      layoutId="activeTheme"
+                    />
                   )}
                 </motion.button>
               ))}

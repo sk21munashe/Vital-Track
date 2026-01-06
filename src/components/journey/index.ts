@@ -1,5 +1,9 @@
-export { ImmersiveJourney } from './ImmersiveJourney';
-export { JourneyPath } from './JourneyPath';
-export { ProgressTrends } from './ProgressTrends';
+export type { ArchitectureStyle, JourneyData, ArchitectureProps } from './types';
 export { ThemeDropdown } from './ThemeDropdown';
-export type { ArchitectureStyle, JourneyData } from './types';
+export { ProgressTrends } from './ProgressTrends';
+export { TodaysFocus } from './TodaysFocus';
+export { SpaceJourney } from './themes/SpaceJourney';
+export { NatureJourney } from './themes/NatureJourney';
+export { CityJourney } from './themes/CityJourney';
+export { OceanJourney } from './themes/OceanJourney';
+export { MountainJourney } from './themes/MountainJourney';
