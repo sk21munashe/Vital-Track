@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, X, Loader2, AlertCircle, Check, Pencil, Trash2, Sparkles } from 'lucide-react';
+import { Camera, X, Loader2, AlertCircle, Check, Pencil, Trash2, Sparkles, Heart, Lightbulb, Leaf, Star } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,14 @@ interface AnalyzedFood {
   fat: number;
 }
 
+interface AIInsights {
+  healthScore: number;
+  mealBalance: string;
+  keyNutrients: string[];
+  suggestion: string;
+  benefits: string[];
+}
+
 interface FoodAnalysisResult {
   foods: AnalyzedFood[];
   totalCalories: number;
@@ -25,6 +33,7 @@ interface FoodAnalysisResult {
   totalFat: number;
   confidence: 'high' | 'medium' | 'low';
   notes?: string;
+  aiInsights?: AIInsights;
 }
 
 type ScanState = 'idle' | 'scanning' | 'success' | 'error';
@@ -398,6 +407,84 @@ export function FoodScanner({ open, onOpenChange, onAddFood, selectedMealType }:
                   </span>
                 </div>
               </div>
+
+              {/* AI Insights */}
+              {analysisResult.aiInsights && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-primary/5 to-accent/10 border border-primary/20"
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-semibold">AI Insights</span>
+                  </div>
+
+                  {/* Health Score */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < Math.round(analysisResult.aiInsights!.healthScore / 2)
+                              ? 'text-yellow-500 fill-yellow-500'
+                              : 'text-muted-foreground/30'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Health Score: {analysisResult.aiInsights.healthScore}/10
+                    </span>
+                  </div>
+
+                  {/* Meal Balance */}
+                  <div className="flex items-start gap-2">
+                    <Heart className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      {analysisResult.aiInsights.mealBalance}
+                    </p>
+                  </div>
+
+                  {/* Key Nutrients */}
+                  {analysisResult.aiInsights.keyNutrients?.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {analysisResult.aiInsights.keyNutrients.map((nutrient, i) => (
+                        <span
+                          key={i}
+                          className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400"
+                        >
+                          {nutrient}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Benefits */}
+                  {analysisResult.aiInsights.benefits?.length > 0 && (
+                    <div className="space-y-1">
+                      {analysisResult.aiInsights.benefits.map((benefit, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <Leaf className="w-3 h-3 text-green-500 mt-0.5 shrink-0" />
+                          <p className="text-xs text-muted-foreground">{benefit}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Suggestion */}
+                  {analysisResult.aiInsights.suggestion && (
+                    <div className="flex items-start gap-2 pt-2 border-t border-primary/10">
+                      <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                      <p className="text-xs text-foreground">
+                        <span className="font-medium">Tip:</span> {analysisResult.aiInsights.suggestion}
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              )}
 
               {/* Actions */}
               <div className="flex gap-3">

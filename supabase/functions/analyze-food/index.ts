@@ -50,26 +50,14 @@ When analyzing a food image, you must:
 1. Identify all visible food items
 2. Estimate portion sizes based on visual cues
 3. Calculate approximate calories and macronutrients
+4. Provide helpful AI insights about the meal's nutritional value
 
-IMPORTANT: You must respond ONLY with a valid JSON object in this exact format, no additional text:
-{
-  "foods": [
-    {
-      "name": "Food item name",
-      "portion": "Estimated portion size (e.g., '1 cup', '200g')",
-      "calories": 250,
-      "protein": 15,
-      "carbs": 30,
-      "fat": 8
-    }
-  ],
-  "totalCalories": 500,
-  "totalProtein": 30,
-  "totalCarbs": 60,
-  "totalFat": 16,
-  "confidence": "high",
-  "notes": "Any relevant notes about the food or estimation"
-}`
+Always include aiInsights with:
+- healthScore: 1-10 rating based on nutritional quality
+- mealBalance: Brief assessment of protein/carb/fat balance
+- keyNutrients: 2-3 notable vitamins or minerals present
+- suggestion: One actionable tip to make this meal healthier
+- benefits: 2-3 health benefits of eating this meal`
           },
           {
             role: 'user',
@@ -92,7 +80,7 @@ IMPORTANT: You must respond ONLY with a valid JSON object in this exact format, 
             type: "function",
             function: {
               name: "analyze_food",
-              description: "Return nutritional analysis of food items in the image",
+              description: "Return nutritional analysis of food items in the image with health insights",
               parameters: {
                 type: "object",
                 properties: {
@@ -116,9 +104,20 @@ IMPORTANT: You must respond ONLY with a valid JSON object in this exact format, 
                   totalCarbs: { type: "number" },
                   totalFat: { type: "number" },
                   confidence: { type: "string", enum: ["high", "medium", "low"] },
-                  notes: { type: "string" }
+                  notes: { type: "string" },
+                  aiInsights: {
+                    type: "object",
+                    properties: {
+                      healthScore: { type: "number", description: "Health score from 1-10" },
+                      mealBalance: { type: "string", description: "Brief assessment of macro balance" },
+                      keyNutrients: { type: "array", items: { type: "string" }, description: "2-3 notable vitamins/minerals in this meal" },
+                      suggestion: { type: "string", description: "One actionable tip to improve this meal" },
+                      benefits: { type: "array", items: { type: "string" }, description: "2-3 health benefits of this meal" }
+                    },
+                    required: ["healthScore", "mealBalance", "keyNutrients", "suggestion", "benefits"]
+                  }
                 },
-                required: ["foods", "totalCalories", "totalProtein", "totalCarbs", "totalFat", "confidence"]
+                required: ["foods", "totalCalories", "totalProtein", "totalCarbs", "totalFat", "confidence", "aiInsights"]
               }
             }
           }
