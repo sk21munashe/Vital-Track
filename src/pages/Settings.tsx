@@ -13,7 +13,8 @@ import {
   Info,
   LogOut,
   Trash2,
-  ChevronRight
+  ChevronRight,
+  RotateCcw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardCard } from '@/components/DashboardCard';
@@ -49,6 +50,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useTourStatus } from '@/components/WelcomeTour';
 
 const LANGUAGES = [
   { value: 'en', label: 'English' },
@@ -77,6 +79,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const { profile, updateProfile } = useWellnessData();
   const { displayName, updateDisplayName } = useUserProfile();
+  const { resetTour } = useTourStatus();
   const [settings, setSettings] = useState<UserSettings>({
     username: displayName || '',
     age: '',
@@ -101,6 +104,13 @@ export default function Settings() {
   const [showEditDetails, setShowEditDetails] = useState(false);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleReplayTour = () => {
+    resetTour();
+    sessionStorage.setItem('replay_tour', 'true');
+    navigate('/');
+    toast.success('Tour will start on the home screen');
+  };
 
   const handleSaveDetails = async () => {
     try {
@@ -326,6 +336,20 @@ export default function Settings() {
               </div>
             </div>
           </div>
+        </DashboardCard>
+      </div>
+
+      {/* Help & Support Section */}
+      <div className="px-4 sm:px-5 md:px-8 mt-6">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+          Help
+        </h2>
+        <DashboardCard className="p-1">
+          <SettingRow 
+            icon={RotateCcw}
+            label="Replay App Tour"
+            onClick={handleReplayTour}
+          />
         </DashboardCard>
       </div>
 

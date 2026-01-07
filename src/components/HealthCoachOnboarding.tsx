@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Sparkles, User, Target, Utensils, Activity, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, User, Target, Utensils, Activity, Loader2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -104,10 +104,38 @@ export function HealthCoachOnboarding({ onComplete, isLoading }: HealthCoachOnbo
     }),
   };
 
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Check if content is scrollable
+  useEffect(() => {
+    const checkScrollable = () => {
+      if (contentRef.current) {
+        const { scrollHeight, clientHeight, scrollTop } = contentRef.current;
+        setShowScrollIndicator(scrollHeight > clientHeight && scrollTop < scrollHeight - clientHeight - 20);
+      }
+    };
+
+    checkScrollable();
+    window.addEventListener('resize', checkScrollable);
+    
+    const contentEl = contentRef.current;
+    if (contentEl) {
+      contentEl.addEventListener('scroll', checkScrollable);
+    }
+
+    return () => {
+      window.removeEventListener('resize', checkScrollable);
+      if (contentEl) {
+        contentEl.removeEventListener('scroll', checkScrollable);
+      }
+    };
+  }, [currentStep]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex flex-col">
-      {/* Header */}
-      <header className="pt-6 pb-4 px-4 sm:px-6">
+    <div className="h-screen max-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex flex-col overflow-hidden">
+      {/* Header - Fixed */}
+      <header className="flex-shrink-0 pt-6 pb-4 px-4 sm:px-6">
         <div className="flex items-center justify-center gap-2 mb-6">
           <Sparkles className="w-6 h-6 text-primary" />
           <h1 className="text-xl sm:text-2xl font-bold">AI Health Coach</h1>
@@ -143,8 +171,12 @@ export function HealthCoachOnboarding({ onComplete, isLoading }: HealthCoachOnbo
         </div>
       </header>
 
-      {/* Content */}
-      <div className="flex-1 px-4 sm:px-6 pb-24 overflow-y-auto">
+      {/* Content - Scrollable */}
+      <div 
+        ref={contentRef}
+        className="flex-1 px-4 sm:px-6 pb-24 overflow-y-auto overscroll-contain scroll-smooth"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <AnimatePresence mode="wait" custom={currentStep}>
           <motion.div
             key={currentStep}
@@ -343,8 +375,29 @@ export function HealthCoachOnboarding({ onComplete, isLoading }: HealthCoachOnbo
         </AnimatePresence>
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t">
+      {/* Scroll Indicator */}
+      <AnimatePresence>
+        {showScrollIndicator && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-none"
+          >
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              className="flex flex-col items-center gap-1"
+            >
+              <span className="text-xs text-muted-foreground">Scroll for more</span>
+              <ChevronDown className="w-5 h-5 text-muted-foreground" />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom Navigation - Fixed */}
+      <div className="flex-shrink-0 p-4 bg-background/95 backdrop-blur-lg border-t safe-area-inset-bottom">
         <div className="max-w-md mx-auto flex gap-3">
           {currentStep > 0 && (
             <Button

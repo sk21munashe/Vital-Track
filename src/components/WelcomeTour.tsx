@@ -8,7 +8,12 @@ import {
   Trophy, 
   ChevronRight, 
   X,
-  Flame
+  Flame,
+  Camera,
+  BarChart3,
+  Heart,
+  Settings,
+  Map
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -20,41 +25,73 @@ interface TourStep {
   description: string;
   icon: React.ElementType;
   color: string;
-  emoji: string;
+  highlight?: string;
 }
 
 const TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Your Wellness Journey! 🎉',
+    title: 'Welcome to Your Wellness Journey!',
     description: 'We\'re excited to have you here! Let us show you around the app so you can start tracking your health goals.',
     icon: Sparkles,
     color: 'from-primary to-accent',
-    emoji: '👋',
+    highlight: 'Get a quick tour of all features',
+  },
+  {
+    id: 'dashboard',
+    title: 'Your Dashboard',
+    description: 'This is your home base! See your daily progress, journey map, and quick stats all in one place.',
+    icon: BarChart3,
+    color: 'from-indigo-500 to-purple-500',
+    highlight: 'View at: Home screen',
+  },
+  {
+    id: 'journey',
+    title: 'Today\'s Journey',
+    description: 'Watch your progress come alive! The animated journey shows how close you are to hitting your daily goals.',
+    icon: Map,
+    color: 'from-violet-500 to-purple-500',
+    highlight: 'Animated progress visualization',
   },
   {
     id: 'water',
     title: 'Track Your Hydration',
-    description: 'Log your water intake easily with quick add buttons. Stay hydrated and watch your progress fill up throughout the day!',
+    description: 'Log your water intake easily with quick add buttons. Stay hydrated and watch your progress fill up!',
     icon: Droplets,
     color: 'from-blue-500 to-cyan-500',
-    emoji: '💧',
+    highlight: 'Tap the water icon in the nav bar',
   },
   {
     id: 'meals',
     title: 'Log Your Meals',
-    description: 'Track calories and nutrition by logging your meals. Use our AI-powered food scanner for quick entries!',
+    description: 'Track calories and nutrition by logging your meals. Search our food database or enter custom foods!',
     icon: Utensils,
     color: 'from-orange-500 to-amber-500',
-    emoji: '🥗',
+    highlight: 'Tap the fork icon in the nav bar',
+  },
+  {
+    id: 'scanner',
+    title: 'AI Food Scanner',
+    description: 'Take a picture of your food and let AI identify it! Get instant calorie and nutrition info.',
+    icon: Camera,
+    color: 'from-pink-500 to-rose-500',
+    highlight: 'Camera icon in Calorie Tracker',
   },
   {
     id: 'goals',
-    title: 'Set Your Goals',
-    description: 'Customize your daily water and calorie goals in your profile. Get AI-suggested targets based on your needs!',
+    title: 'Personalized AI Goals',
+    description: 'Your calorie and water goals are set by AI based on your profile. View them anytime in your profile!',
     icon: Target,
     color: 'from-green-500 to-emerald-500',
-    emoji: '🎯',
+    highlight: 'Profile > Daily Goals',
+  },
+  {
+    id: 'wellness',
+    title: 'Wellness Check',
+    description: 'Track your weight, view body metrics, and get AI-powered health insights in one place.',
+    icon: Heart,
+    color: 'from-red-500 to-pink-500',
+    highlight: 'Tap the heart icon in the nav bar',
   },
   {
     id: 'streaks',
@@ -62,7 +99,7 @@ const TOUR_STEPS: TourStep[] = [
     description: 'Use the app daily to build your streak! The longer your streak, the more achievements you\'ll unlock.',
     icon: Flame,
     color: 'from-orange-500 to-red-500',
-    emoji: '🔥',
+    highlight: 'Streak counter on home screen',
   },
   {
     id: 'achievements',
@@ -70,7 +107,15 @@ const TOUR_STEPS: TourStep[] = [
     description: 'Complete challenges and hit milestones to earn badges. Check your profile to see all your achievements!',
     icon: Trophy,
     color: 'from-yellow-500 to-amber-500',
-    emoji: '🏆',
+    highlight: 'Profile > Achievements section',
+  },
+  {
+    id: 'settings',
+    title: 'Customize Settings',
+    description: 'Adjust units, notifications, and personal details. You can replay this tour anytime from Settings!',
+    icon: Settings,
+    color: 'from-gray-500 to-slate-500',
+    highlight: 'Profile > Settings gear icon',
   },
 ];
 
@@ -141,6 +186,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
             <button
               onClick={handleSkip}
               className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted/50 transition-colors"
+              aria-label="Skip tour"
             >
               <X className="w-5 h-5 text-muted-foreground" />
             </button>
@@ -157,16 +203,6 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                 <Icon className="w-10 h-10 text-white" />
               </motion.div>
 
-              {/* Emoji */}
-              <motion.span
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-4xl block mb-2"
-              >
-                {step.emoji}
-              </motion.span>
-
               {/* Title */}
               <motion.h2
                 initial={{ opacity: 0, y: 10 }}
@@ -182,10 +218,23 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-muted-foreground text-sm leading-relaxed"
+                className="text-muted-foreground text-sm leading-relaxed mb-3"
               >
                 {step.description}
               </motion.p>
+
+              {/* Highlight hint */}
+              {step.highlight && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  {step.highlight}
+                </motion.div>
+              )}
             </div>
 
             {/* Actions */}
@@ -219,7 +268,7 @@ export function WelcomeTour({ onComplete }: WelcomeTourProps) {
               <div className="pb-4 text-center">
                 <button
                   onClick={handleSkip}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
                 >
                   Skip tour
                 </button>
@@ -239,8 +288,12 @@ export function useTourStatus() {
   useEffect(() => {
     const tourCompleted = localStorage.getItem(TOUR_STORAGE_KEY);
     const justCompletedOnboarding = sessionStorage.getItem('just_completed_onboarding');
+    const replayTour = sessionStorage.getItem('replay_tour');
     
-    if (!tourCompleted && justCompletedOnboarding === 'true') {
+    if (replayTour === 'true') {
+      setShowTour(true);
+      sessionStorage.removeItem('replay_tour');
+    } else if (!tourCompleted && justCompletedOnboarding === 'true') {
       setShowTour(true);
       setIsNewUser(true);
       sessionStorage.removeItem('just_completed_onboarding');
@@ -252,5 +305,9 @@ export function useTourStatus() {
     setIsNewUser(false);
   };
 
-  return { showTour, isNewUser, completeTour };
+  const resetTour = () => {
+    localStorage.removeItem(TOUR_STORAGE_KEY);
+  };
+
+  return { showTour, isNewUser, completeTour, resetTour };
 }
