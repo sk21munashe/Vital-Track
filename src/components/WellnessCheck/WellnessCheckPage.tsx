@@ -9,6 +9,10 @@ import { toast } from 'sonner';
 import { format, subDays } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useWeightLogs } from '@/hooks/useWeightLogs';
+import { useUserProfile } from '@/contexts/UserProfileContext';
+import { useUserPlan } from '@/contexts/UserPlanContext';
+import { useWellnessData } from '@/hooks/useWellnessData';
+import { generateWellnessReport, generateShareContent } from '@/utils/wellnessReportGenerator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,6 +82,17 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
     getChartData,
     getWeeklyStats,
   } = useWeightLogs();
+
+  // Get additional context for comprehensive export
+  const { displayName } = useUserProfile();
+  const { healthProfile, healthPlan } = useUserPlan();
+  const { 
+    getTodayWater, 
+    getTodayCalories, 
+    getTodayFitness, 
+    profile: wellnessProfile,
+    getTodayMeals
+  } = useWellnessData();
 
   // Fetch health profile data on mount
   useEffect(() => {
@@ -253,42 +268,59 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
     return 'Obese';
   };
 
-  const generateCSVContent = () => {
-    const bmiCategory = bmi ? getBmiCategory(parseFloat(bmi)) : 'N/A';
+  // Prepare report data for export
+  const prepareReportData = () => {
+    const todayMeals = getTodayMeals();
+    const totalMacros = todayMeals.reduce(
+      (acc, meal) => ({
+        carbs: acc.carbs + (meal.foodItem.carbs || 0),
+        protein: acc.protein + (meal.foodItem.protein || 0),
+        fat: acc.fat + (meal.foodItem.fat || 0),
+      }),
+      { carbs: 0, protein: 0, fat: 0 }
+    );
+    const totalMacroGrams = totalMacros.carbs + totalMacros.protein + totalMacros.fat;
     
-    let csv = 'Vital Track Wellness Report\n';
-    csv += `Generated: ${format(new Date(), 'MMMM d, yyyy h:mm a')}\n\n`;
-    
-    // Current Stats
-    csv += 'Current Stats\n';
-    csv += 'Metric,Value\n';
-    csv += `Current Weight,${currentWeight ? `${currentWeight} kg` : 'Not logged'}\n`;
-    csv += `Height,${userHeight ? `${userHeight} cm` : 'Not logged'}\n`;
-    csv += `BMI,${bmi || 'N/A'}\n`;
-    csv += `BMI Category,${bmiCategory}\n\n`;
-    
-    // Weight History
-    if (weightLogs.length > 0) {
-      csv += 'Weight History\n';
-      csv += 'Date,Weight (kg),Notes\n';
-      weightLogs.forEach(log => {
-        const date = format(new Date(log.logged_at), 'yyyy-MM-dd');
-        const notes = log.notes ? `"${log.notes.replace(/"/g, '""')}"` : '';
-        csv += `${date},${log.weight},${notes}\n`;
-      });
-    }
-    
-    return csv;
+    return {
+      userName: displayName,
+      currentWeight,
+      userHeight,
+      weightLogs: weightLogs.map(log => ({
+        id: log.id,
+        weight: log.weight,
+        logged_at: log.logged_at,
+        notes: log.notes,
+      })),
+      healthProfile,
+      healthPlan,
+      dailyProgress: {
+        waterIntake: getTodayWater(),
+        waterGoal: wellnessProfile.goals.waterGoal,
+        calories: getTodayCalories(),
+        calorieGoal: wellnessProfile.goals.calorieGoal,
+        macros: {
+          carbs: totalMacroGrams > 0 ? Math.round((totalMacros.carbs / totalMacroGrams) * 100) : 50,
+          protein: totalMacroGrams > 0 ? Math.round((totalMacros.protein / totalMacroGrams) * 100) : 25,
+          fat: totalMacroGrams > 0 ? Math.round((totalMacros.fat / totalMacroGrams) * 100) : 25,
+        },
+        activityMinutes: getTodayFitness(),
+        fitnessGoal: wellnessProfile.goals.fitnessGoal,
+      },
+      notes: weightLogs.length > 0 && weightLogs[0].notes ? weightLogs[0].notes : '',
+      aiInsights: insights.map(i => i.message),
+      focusChallenge: 'Stay consistent with your wellness goals today!',
+    };
   };
 
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const csvContent = generateCSVContent();
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
+      const reportData = prepareReportData();
+      const pdfBlob = await generateWellnessReport(reportData);
+      
+      const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
-      const filename = `wellness-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      const filename = `wellness-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       
       link.setAttribute('href', url);
       link.setAttribute('download', filename);
@@ -312,22 +344,13 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
   const handleShare = async () => {
     setIsSharing(true);
     try {
-      const today = format(new Date(), 'MMMM d, yyyy');
-      const bmiCategory = bmi ? getBmiCategory(parseFloat(bmi)) : null;
-      
-      let summary = `My Wellness Check [${today}]: `;
-      if (currentWeight) {
-        summary += `Weight: ${currentWeight} kg`;
-      }
-      if (bmi) {
-        summary += ` | BMI: ${bmi} (${bmiCategory})`;
-      }
-      summary += `. Tracked with Vital Track.`;
+      const reportData = prepareReportData();
+      const summary = generateShareContent(reportData);
       
       // Check if Web Share API is available
       if (navigator.share) {
         await navigator.share({
-          title: 'My Wellness Check',
+          title: 'My Wellness Check - Vital Track',
           text: summary,
         });
         toast.success('Shared successfully!');
@@ -335,7 +358,7 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(summary);
         toast.success('Copied to clipboard!', {
-          description: 'Share link copied. Paste it anywhere to share.',
+          description: 'Share text copied. Paste it anywhere to share.',
         });
       }
     } catch (error: any) {
