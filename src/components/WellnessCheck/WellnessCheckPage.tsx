@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Heart, Scale, TrendingUp, TrendingDown, Target, Calendar, Edit2, Trash2, Ruler, FileText, Sparkles, Lightbulb, Trophy, Download, Share2, Zap, ChevronDown, ChevronUp, Percent, Apple, Droplets, Flame, X, Check } from 'lucide-react';
+import { ArrowLeft, Heart, Scale, TrendingUp, TrendingDown, Target, Calendar, Edit2, Trash2, Ruler, FileText, Sparkles, Lightbulb, Trophy, Download, Share2, Zap, ChevronDown, ChevronUp, Percent, Apple, Droplets, Flame, X, Check, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BodyAvatar } from './BodyAvatar';
@@ -58,6 +58,8 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [showExtras, setShowExtras] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   
   // Edit/Delete states
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -244,12 +246,108 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
     { label: 'Fat', value: '25%', icon: Droplets, color: 'water' },
   ];
 
-  const handleExport = () => {
-    toast.success('Report downloaded!', { description: 'Your wellness report has been saved.' });
+  const getBmiCategory = (bmiValue: number) => {
+    if (bmiValue < 18.5) return 'Underweight';
+    if (bmiValue < 25) return 'Normal';
+    if (bmiValue < 30) return 'Overweight';
+    return 'Obese';
   };
 
-  const handleShare = () => {
-    toast.success('Ready to share!', { description: 'Share link copied to clipboard.' });
+  const generateCSVContent = () => {
+    const bmiCategory = bmi ? getBmiCategory(parseFloat(bmi)) : 'N/A';
+    
+    let csv = 'Vital Track Wellness Report\n';
+    csv += `Generated: ${format(new Date(), 'MMMM d, yyyy h:mm a')}\n\n`;
+    
+    // Current Stats
+    csv += 'Current Stats\n';
+    csv += 'Metric,Value\n';
+    csv += `Current Weight,${currentWeight ? `${currentWeight} kg` : 'Not logged'}\n`;
+    csv += `Height,${userHeight ? `${userHeight} cm` : 'Not logged'}\n`;
+    csv += `BMI,${bmi || 'N/A'}\n`;
+    csv += `BMI Category,${bmiCategory}\n\n`;
+    
+    // Weight History
+    if (weightLogs.length > 0) {
+      csv += 'Weight History\n';
+      csv += 'Date,Weight (kg),Notes\n';
+      weightLogs.forEach(log => {
+        const date = format(new Date(log.logged_at), 'yyyy-MM-dd');
+        const notes = log.notes ? `"${log.notes.replace(/"/g, '""')}"` : '';
+        csv += `${date},${log.weight},${notes}\n`;
+      });
+    }
+    
+    return csv;
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const csvContent = generateCSVContent();
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const filename = `wellness-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Wellness report exported successfully.', {
+        description: `Saved as ${filename}`,
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Could not export. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleShare = async () => {
+    setIsSharing(true);
+    try {
+      const today = format(new Date(), 'MMMM d, yyyy');
+      const bmiCategory = bmi ? getBmiCategory(parseFloat(bmi)) : null;
+      
+      let summary = `My Wellness Check [${today}]: `;
+      if (currentWeight) {
+        summary += `Weight: ${currentWeight} kg`;
+      }
+      if (bmi) {
+        summary += ` | BMI: ${bmi} (${bmiCategory})`;
+      }
+      summary += `. Tracked with Vital Track.`;
+      
+      // Check if Web Share API is available
+      if (navigator.share) {
+        await navigator.share({
+          title: 'My Wellness Check',
+          text: summary,
+        });
+        toast.success('Shared successfully!');
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(summary);
+        toast.success('Copied to clipboard!', {
+          description: 'Share link copied. Paste it anywhere to share.',
+        });
+      }
+    } catch (error: any) {
+      // User cancelled sharing is not an error
+      if (error?.name === 'AbortError') {
+        return;
+      }
+      console.error('Share failed:', error);
+      toast.error('Sharing not available. Check device permissions.');
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const triggerCelebration = () => {
@@ -690,12 +788,20 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
                   AI Wellness Insights
                 </h3>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleExport} className="h-9">
-                    <Download className="w-4 h-4 mr-2" />
+                  <Button variant="outline" size="sm" onClick={handleExport} disabled={isExporting} className="h-9">
+                    {isExporting ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
                     Export
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleShare} className="h-9">
-                    <Share2 className="w-4 h-4 mr-2" />
+                  <Button variant="outline" size="sm" onClick={handleShare} disabled={isSharing} className="h-9">
+                    {isSharing ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Share2 className="w-4 h-4 mr-2" />
+                    )}
                     Share
                   </Button>
                 </div>
