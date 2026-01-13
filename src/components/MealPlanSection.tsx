@@ -1,11 +1,7 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { 
   Sparkles, 
-  ChevronRight, 
   RefreshCw, 
-  Printer, 
-  Download,
   Flame,
   Calendar,
   Eye,
@@ -18,10 +14,8 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { MealPlanReport } from '@/components/MealPlanReport';
 import { useUserPlan } from '@/contexts/UserPlanContext';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 const GOAL_LABELS: Record<string, { label: string; emoji: string }> = {
@@ -46,62 +40,10 @@ export function MealPlanSection() {
     }
   };
   
-  const handlePrint = () => {
-    // Open the full report and trigger print
+  const handleOpen = () => {
     setShowFullReport(true);
-    setTimeout(() => {
-      window.print();
-    }, 500);
   };
   
-  const handleDownload = () => {
-    if (!healthPlan || !healthProfile) return;
-    
-    // Generate a text version of the plan
-    const planText = generatePlanText();
-    const blob = new Blob([planText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'my-meal-plan.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Plan downloaded!');
-  };
-  
-  const generatePlanText = () => {
-    if (!healthPlan || !healthProfile) return '';
-    
-    const goalInfo = GOAL_LABELS[healthProfile.healthGoal] || GOAL_LABELS.maintenance;
-    
-    let text = `MY PERSONALIZED MEAL PLAN\n`;
-    text += `========================\n\n`;
-    text += `Goal: ${goalInfo.label}\n`;
-    text += `Daily Calories: ${healthPlan.dailyCalories} kcal\n`;
-    text += `Macros: Protein ${healthPlan.macros.protein}g | Carbs ${healthPlan.macros.carbs}g | Fats ${healthPlan.macros.fats}g\n\n`;
-    text += `7-DAY MEAL PLAN\n`;
-    text += `---------------\n\n`;
-    
-    healthPlan.weeklyPlan.forEach((day, index) => {
-      text += `DAY ${index + 1} - ${day.day}\n`;
-      text += `Breakfast: ${day.meals.breakfast}\n`;
-      text += `Lunch: ${day.meals.lunch}\n`;
-      text += `Dinner: ${day.meals.dinner}\n`;
-      text += `Snacks: ${day.meals.snacks}\n`;
-      text += `Exercise: ${day.exerciseSuggestion}\n`;
-      text += `Water Goal: ${day.waterGoal}L\n\n`;
-    });
-    
-    text += `TIPS\n`;
-    text += `----\n`;
-    healthPlan.recommendations.forEach((tip, index) => {
-      text += `${index + 1}. ${tip}\n`;
-    });
-    
-    return text;
-  };
   
   // No plan available
   if (!healthPlan || !healthProfile) {
@@ -203,19 +145,11 @@ export function MealPlanSection() {
             </Button>
             <Button
               variant="ghost"
-              className="flex-1 h-12 rounded-none border-r border-border text-xs gap-1.5"
-              onClick={handlePrint}
-            >
-              <Printer className="w-3.5 h-3.5" />
-              Print
-            </Button>
-            <Button
-              variant="ghost"
               className="flex-1 h-12 rounded-none text-xs gap-1.5"
-              onClick={handleDownload}
+              onClick={handleOpen}
             >
-              <Download className="w-3.5 h-3.5" />
-              Save
+              <Eye className="w-3.5 h-3.5" />
+              Open
             </Button>
           </div>
         </DashboardCard>
