@@ -197,25 +197,112 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
   const chartData = getChartData();
   const weeklyStats = getWeeklyStats();
 
-  // AI Milestones based on current weight
-  const aiMilestones: AIMilestone[] = currentWeight ? [
-    { 
-      targetWeight: Math.round((currentWeight - 2) * 10) / 10, 
-      estimatedDate: format(subDays(new Date(), -14), 'MMM d'),
-      message: 'First milestone!',
-      achieved: false
-    },
-    { 
-      targetWeight: Math.round((currentWeight - 5) * 10) / 10, 
-      estimatedDate: format(subDays(new Date(), -42), 'MMM d'),
-      message: 'Halfway there!',
-      achieved: false
-    },
-  ] : [];
+  // Get user's health goal
+  const userGoal = (healthProfile as any)?.healthGoal || 'maintenance';
+  const isGainGoal = userGoal === 'weight_gain' || userGoal === 'muscle_building';
+  const isLossGoal = userGoal === 'weight_loss';
+
+  // Goal-specific labels
+  const getGoalLabel = () => {
+    switch (userGoal) {
+      case 'weight_loss': return 'Weight Loss';
+      case 'weight_gain': return 'Weight Gain';
+      case 'muscle_building': return 'Muscle Building';
+      case 'maintenance': return 'Maintenance';
+      default: return 'Wellness';
+    }
+  };
+
+  // AI Milestones based on current weight AND user's goal
+  const aiMilestones: AIMilestone[] = currentWeight ? (
+    isGainGoal ? [
+      { 
+        targetWeight: Math.round((currentWeight + 2) * 10) / 10, 
+        estimatedDate: format(subDays(new Date(), -14), 'MMM d'),
+        message: 'First gain milestone!',
+        achieved: false
+      },
+      { 
+        targetWeight: Math.round((currentWeight + 5) * 10) / 10, 
+        estimatedDate: format(subDays(new Date(), -42), 'MMM d'),
+        message: 'Building momentum!',
+        achieved: false
+      },
+    ] : isLossGoal ? [
+      { 
+        targetWeight: Math.round((currentWeight - 2) * 10) / 10, 
+        estimatedDate: format(subDays(new Date(), -14), 'MMM d'),
+        message: 'First loss milestone!',
+        achieved: false
+      },
+      { 
+        targetWeight: Math.round((currentWeight - 5) * 10) / 10, 
+        estimatedDate: format(subDays(new Date(), -42), 'MMM d'),
+        message: 'Halfway there!',
+        achieved: false
+      },
+    ] : [
+      { 
+        targetWeight: currentWeight, 
+        estimatedDate: format(subDays(new Date(), -14), 'MMM d'),
+        message: 'Maintain current weight',
+        achieved: true
+      },
+    ]
+  ) : [];
 
   const bmi = currentWeight && userHeight 
     ? (currentWeight / Math.pow(userHeight / 100, 2)).toFixed(1)
     : null;
+
+  // Goal-aware weekly analysis message
+  const getWeeklyAnalysisMessage = () => {
+    if (weightLogs.length <= 1) return 'Log more entries to see your weekly analysis.';
+    
+    const change = weeklyStats.weeklyChange;
+    const gained = change > 0;
+    const lost = change < 0;
+    
+    if (isGainGoal) {
+      if (gained) return `You've gained ${Math.abs(change)} kg this week. Great progress on your ${userGoal === 'muscle_building' ? 'muscle building' : 'weight gain'} goal!`;
+      if (lost) return `You've lost ${Math.abs(change)} kg this week. Consider increasing your calorie intake.`;
+      return 'Your weight has remained stable. Increase your intake to support gains!';
+    }
+    
+    if (isLossGoal) {
+      if (lost) return `You've lost ${Math.abs(change)} kg this week. Keep up the great work!`;
+      if (gained) return `You've gained ${Math.abs(change)} kg this week. Stay focused on your goals!`;
+      return 'Your weight has remained stable. Stay consistent!';
+    }
+    
+    // Maintenance
+    if (Math.abs(change) < 0.5) return 'Great job! Your weight is stable - perfect for maintenance!';
+    return `Your weight ${gained ? 'increased' : 'decreased'} by ${Math.abs(change)} kg. Adjust intake to maintain.`;
+  };
+
+  // Goal-aware tips
+  const getGoalTip = () => {
+    if (isGainGoal) {
+      return {
+        title: 'Gain Tip',
+        message: userGoal === 'muscle_building' 
+          ? 'Focus on protein-rich meals and strength training for optimal muscle growth.'
+          : 'Add healthy calorie-dense foods like nuts, avocados, and whole grains to your meals.'
+      };
+    }
+    if (isLossGoal) {
+      return {
+        title: 'Loss Tip',
+        message: 'Try adding a 10-minute walk after meals to boost your metabolism and burn extra calories.'
+      };
+    }
+    return {
+      title: 'Wellness Tip',
+      message: 'Balance your meals with a mix of proteins, carbs, and healthy fats to maintain your weight.'
+    };
+  };
+
+  const goalTip = getGoalTip();
 
   const insights: AIInsight[] = [
     {
@@ -223,8 +310,8 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
       icon: <Trophy className="w-4 h-4" />,
       title: weightLogs.length >= 7 ? 'Great Progress!' : 'Keep Going!',
       message: weightLogs.length >= 7 
-        ? `You've logged your weight ${weightLogs.length} times! Consistency is the key to success.`
-        : `You've logged ${weightLogs.length} weight entries. Keep tracking for better insights!`,
+        ? `You've logged your weight ${weightLogs.length} times! Consistency is key for your ${getGoalLabel()} journey.`
+        : `You've logged ${weightLogs.length} weight entries. Keep tracking to reach your ${getGoalLabel()} goals!`,
       color: 'nutrition'
     },
     {
@@ -238,18 +325,14 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
       type: 'insight',
       icon: <TrendingUp className="w-4 h-4" />,
       title: 'Weekly Analysis',
-      message: weeklyStats.isLosing 
-        ? `You've lost ${Math.abs(weeklyStats.weeklyChange)} kg this week. Keep up the great work!`
-        : weightLogs.length > 1
-        ? `Your weight has ${weeklyStats.weeklyChange > 0 ? 'increased' : 'remained stable'} this week. Stay focused!`
-        : 'Log more entries to see your weekly analysis.',
+      message: getWeeklyAnalysisMessage(),
       color: 'health'
     },
     {
       type: 'tip',
       icon: <Zap className="w-4 h-4" />,
-      title: 'Energy Boost',
-      message: 'Try adding a 10-minute walk after meals to support your metabolism.',
+      title: goalTip.title,
+      message: goalTip.message,
       color: 'water'
     },
   ];
@@ -494,10 +577,18 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
 
             {/* ===== MIDDLE SECTION: Weight Logs ===== */}
             <section className="space-y-4">
-              <h3 className="text-base font-semibold flex items-center gap-2">
-                <Scale className="w-5 h-5 text-health" />
-                Weight & Progress
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold flex items-center gap-2">
+                  <Scale className="w-5 h-5 text-health" />
+                  Weight & Progress
+                </h3>
+                {currentWeight && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-health/10 border border-health/30">
+                    <span className="text-xs text-muted-foreground">Current:</span>
+                    <span className="text-sm font-bold text-health">{currentWeight} kg</span>
+                  </div>
+                )}
+              </div>
 
               {/* Quick Weight Input */}
               <motion.div
@@ -512,7 +603,7 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
                       type="number"
                       value={weightInput}
                       onChange={(e) => setWeightInput(e.target.value)}
-                      placeholder={currentWeight ? `${currentWeight} kg` : 'Enter weight'}
+                      placeholder="Enter weight"
                       className="w-full h-11 pl-10 pr-14 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-health/50"
                       step="0.1"
                     />
@@ -605,6 +696,7 @@ export function WellnessCheckPage({ onClose }: WellnessCheckPageProps) {
                   <h4 className="text-sm font-semibold flex items-center gap-2 mb-3">
                     <Sparkles className="w-4 h-4 text-health" />
                     AI Milestones
+                    <span className="text-xs text-muted-foreground font-normal">({getGoalLabel()})</span>
                   </h4>
                   <div className="space-y-2">
                     {aiMilestones.length > 0 ? aiMilestones.map((milestone, index) => (
