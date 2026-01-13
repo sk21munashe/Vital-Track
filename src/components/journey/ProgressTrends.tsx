@@ -43,23 +43,23 @@ export function ProgressTrends({ data }: ProgressTrendsProps) {
     });
   };
 
-  // Generate monthly data (4 weeks)
+  // Generate monthly data (4 weeks) - starts at 0 for new users
   const getMonthlyData = () => {
     return [
-      { label: 'Week 1', progress: 92, isFuture: false },
-      { label: 'Week 2', progress: 78, isFuture: false },
-      { label: 'Week 3', progress: 45, isFuture: false },
-      { label: 'Week 4', progress: 88, isFuture: false },
+      { label: 'Week 1', progress: 0, isFuture: false },
+      { label: 'Week 2', progress: 0, isFuture: false },
+      { label: 'Week 3', progress: 0, isFuture: false },
+      { label: 'Week 4', progress: 0, isFuture: false },
     ];
   };
 
-  // Generate yearly data (12 months)
+  // Generate yearly data (12 months) - starts at 0 for new users
   const getYearlyData = () => {
     const currentMonth = new Date().getMonth();
     return MONTHS.slice(0, currentMonth + 1).map((month) => ({
       label: month,
       isFuture: false,
-      progress: Math.floor(Math.random() * 50) + 50, // Placeholder - would come from real data
+      progress: 0, // Starts at 0 - would come from real aggregated data
     }));
   };
 
