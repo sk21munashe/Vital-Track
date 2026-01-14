@@ -110,7 +110,10 @@ export function MealPlanReport({ profile, plan, onStartPlan }: MealPlanReportPro
       </motion.header>
 
       {/* Scrollable Content */}
-      <ScrollArea className="flex-1 px-4">
+      <div 
+        className="flex-1 px-4 overflow-y-auto overscroll-contain"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <motion.div 
           variants={containerVariants}
           initial="hidden"
@@ -334,7 +337,7 @@ export function MealPlanReport({ profile, plan, onStartPlan }: MealPlanReportPro
             </div>
           </motion.div>
         </motion.div>
-      </ScrollArea>
+      </div>
 
       {/* Fixed Bottom CTA */}
       <motion.div 
