@@ -172,11 +172,13 @@ export function HealthCoachOnboarding({ onComplete, isLoading }: HealthCoachOnbo
       </header>
 
       {/* Content - Scrollable */}
-      <div 
-        ref={contentRef}
-        className="flex-1 px-4 sm:px-6 pb-24 overflow-y-auto overscroll-contain scroll-smooth"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
+      <div className="flex-1 relative overflow-hidden">
+        <div 
+          ref={contentRef}
+          className="h-full px-4 sm:px-6 pb-24 overflow-y-auto overscroll-contain scroll-smooth"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+
         <AnimatePresence mode="wait" custom={currentStep}>
           <motion.div
             key={currentStep}
@@ -373,6 +375,12 @@ export function HealthCoachOnboarding({ onComplete, isLoading }: HealthCoachOnbo
             )}
           </motion.div>
         </AnimatePresence>
+        </div>
+        
+        {/* Bottom fade gradient for scroll indication */}
+        {showScrollIndicator && (
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/90 to-transparent pointer-events-none" />
+        )}
       </div>
 
       {/* Scroll Indicator */}
