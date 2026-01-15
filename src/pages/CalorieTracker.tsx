@@ -8,6 +8,7 @@ import { ProgressRing } from '@/components/ProgressRing';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import { useAchievements } from '@/hooks/useAchievements';
 import { useAIPlanSync } from '@/hooks/useAIPlanSync';
+import { useAIScanDiscovery } from '@/hooks/useAIScanDiscovery';
 import { commonFoods } from '@/data/foodDatabase';
 import { FoodItem, FoodLog } from '@/types/wellness';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { FoodScanner } from '@/components/FoodScanner';
+import { 
+  FirstTimeTooltip,
+  ReengagementBanner,
+  EmptyStateCard,
+  MealTimeBanner,
+  ManualEntryNudge,
+} from '@/components/AIScanDiscoveryPrompts';
 
 const mealTypes = [
   { id: 'breakfast', label: 'Breakfast', icon: Coffee, time: 'Morning' },
@@ -110,6 +118,20 @@ export default function CalorieTracker() {
   const todayCalories = getTodayCalories();
   const todayMeals = getTodayMeals();
   const caloriesRemaining = profile.goals.calorieGoal - todayCalories;
+  
+  // AI Scan Discovery System
+  const {
+    showFirstTimeTooltip,
+    showReengagementSuggestion,
+    showEmptyStateCard,
+    showMealTimeBanner,
+    currentMealWindow,
+    dismissFirstTimeTooltip,
+    dismissReengagement,
+    dismissMealTimeBanner,
+    recordScanUsage,
+    onFoodLogged,
+  } = useAIScanDiscovery(todayMeals.length > 0);
 
   // Check if calorie goal is met (within 10% of target)
   useEffect(() => {
@@ -144,6 +166,7 @@ export default function CalorieTracker() {
 
   const handleAddFood = (food: FoodItem) => {
     addFood(selectedMealType, food);
+    onFoodLogged(); // Dismiss empty state card
     toast.success(`Added ${food.name}! 🍽️`, {
       description: `+5 points earned`,
     });
@@ -185,12 +208,14 @@ export default function CalorieTracker() {
 
   // Open food scanner
   const handleOpenScanner = () => {
+    recordScanUsage(); // Track scanner usage for discovery system
     setShowFoodScanner(true);
   };
 
   // Handle food added from scanner
   const handleScannerAddFood = (mealType: FoodLog['mealType'], food: FoodItem) => {
     addFood(mealType, food);
+    onFoodLogged(); // Dismiss empty state card
   };
 
   const calculateBMR = () => {
@@ -278,6 +303,21 @@ export default function CalorieTracker() {
           </div>
         </div>
       </header>
+
+      {/* Layer 4: Meal Time Banner */}
+      <MealTimeBanner
+        show={showMealTimeBanner}
+        mealWindow={currentMealWindow}
+        onScanClick={handleOpenScanner}
+        onDismiss={dismissMealTimeBanner}
+      />
+
+      {/* Layer 2: Re-engagement Banner */}
+      <ReengagementBanner
+        show={showReengagementSuggestion}
+        onScanClick={handleOpenScanner}
+        onDismiss={dismissReengagement}
+      />
 
       {/* Summary Card */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mb-4 sm:mb-6 glass-nutrition">
@@ -411,6 +451,12 @@ export default function CalorieTracker() {
 
       {/* Today's Meals */}
       <div className="px-4 sm:px-5 md:px-8">
+        {/* Layer 3: Empty State Card */}
+        <EmptyStateCard
+          show={showEmptyStateCard}
+          onScanClick={handleOpenScanner}
+        />
+        
         <h2 className="text-base sm:text-lg font-semibold mb-3">Today's Meals</h2>
         {mealTypes.map(({ id, label, icon: Icon }) => {
           const meals = mealsByType[id] || [];
@@ -515,6 +561,22 @@ export default function CalorieTracker() {
           );
         })}
       </div>
+
+      {/* Floating AI Scan Button with First-Time Tooltip */}
+      <FirstTimeTooltip
+        show={showFirstTimeTooltip}
+        onDismiss={dismissFirstTimeTooltip}
+        onScanClick={handleOpenScanner}
+      >
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleOpenScanner}
+          className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-nutrition to-nutrition-dark shadow-lg flex items-center justify-center"
+        >
+          <Camera className="w-6 h-6 text-white" />
+        </motion.button>
+      </FirstTimeTooltip>
 
       {/* Add Food Dialog */}
       <Dialog open={showAddFood} onOpenChange={setShowAddFood}>
@@ -629,6 +691,9 @@ export default function CalorieTracker() {
                 <Plus className="w-4 h-4 mr-2" />
                 Add Food
               </Button>
+              
+              {/* Layer 5: Manual Entry Nudge */}
+              <ManualEntryNudge onScanClick={handleOpenScanner} />
             </TabsContent>
             
             <TabsContent value="scan" className="flex-1">
