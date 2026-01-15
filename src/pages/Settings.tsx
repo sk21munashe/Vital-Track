@@ -14,8 +14,14 @@ import {
   LogOut,
   Trash2,
   ChevronRight,
-  RotateCcw
+  RotateCcw,
+  BellRing,
+  Sparkles,
+  Droplets,
+  Target,
+  Calendar
 } from 'lucide-react';
+import { useNotifications } from '@/hooks/useNotifications';
 import { useNavigate } from 'react-router-dom';
 import { DashboardCard } from '@/components/DashboardCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
@@ -80,6 +86,17 @@ export default function Settings() {
   const { profile, updateProfile } = useWellnessData();
   const { displayName, updateDisplayName } = useUserProfile();
   const { resetTour } = useTourStatus();
+  const { 
+    settings: notificationSettings, 
+    permissionStatus, 
+    isLoading: notificationLoading,
+    isSupported: notificationsSupported,
+    enableNotifications,
+    disableNotifications,
+    updateSettings: updateNotificationSettings,
+    sendTestNotification 
+  } = useNotifications();
+  
   const [settings, setSettings] = useState<UserSettings>({
     username: displayName || '',
     age: '',
@@ -305,36 +322,147 @@ export default function Settings() {
           
           <div className="border-t border-border/50 mx-3" />
           
+          {/* Enhanced AI-Powered Notifications Section */}
           <div className="p-3 sm:p-4 space-y-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </div>
-              <span className="text-sm sm:text-base font-medium">Notifications</span>
-            </div>
-            <div className="pl-11 sm:pl-13 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Daily Reminders</span>
-                <Switch 
-                  checked={settings.notifications.dailyReminders}
-                  onCheckedChange={() => handleNotificationToggle('dailyReminders')}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Goal Alerts</span>
-                <Switch 
-                  checked={settings.notifications.goalAlerts}
-                  onCheckedChange={() => handleNotificationToggle('goalAlerts')}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Weekly Reports</span>
-                <Switch 
-                  checked={settings.notifications.weeklyReports}
-                  onCheckedChange={() => handleNotificationToggle('weeklyReports')}
-                />
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                </div>
+                <div>
+                  <span className="text-sm sm:text-base font-medium">Smart Reminders</span>
+                  <p className="text-xs text-muted-foreground">AI-powered motivational notifications</p>
+                </div>
               </div>
             </div>
+            
+            {/* Main Enable/Disable Button */}
+            {notificationsSupported ? (
+              <div className="space-y-4">
+                {!notificationSettings.enabled ? (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={async () => {
+                      const success = await enableNotifications();
+                      if (success) {
+                        toast.success('Notifications enabled! 🔔', {
+                          description: 'You\'ll receive personalized reminders throughout the day.',
+                        });
+                      } else if (permissionStatus === 'denied') {
+                        toast.error('Notifications blocked', {
+                          description: 'Please enable notifications in your browser settings.',
+                        });
+                      }
+                    }}
+                    disabled={notificationLoading}
+                    className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/30 hover:border-primary/50 transition-all"
+                  >
+                    <BellRing className="w-5 h-5 text-primary" />
+                    <span className="font-medium text-primary">
+                      {notificationLoading ? 'Enabling...' : 'Enable Smart Reminders'}
+                    </span>
+                    <Sparkles className="w-4 h-4 text-primary" />
+                  </motion.button>
+                ) : (
+                  <>
+                    {/* Enabled State - Show toggle options */}
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-sm text-green-600 dark:text-green-400 font-medium">Notifications Active</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          disableNotifications();
+                          toast.success('Notifications disabled');
+                        }}
+                        className="text-xs text-muted-foreground hover:text-destructive"
+                      >
+                        Disable
+                      </Button>
+                    </div>
+                    
+                    {/* Individual notification type toggles */}
+                    <div className="space-y-3 pl-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Droplets className="w-4 h-4 text-water" />
+                          <span className="text-sm text-muted-foreground">Water Reminders</span>
+                          <span className="text-[10px] text-muted-foreground">(10AM, 2PM, 6PM)</span>
+                        </div>
+                        <Switch 
+                          checked={notificationSettings.waterReminders}
+                          onCheckedChange={(checked) => updateNotificationSettings({ waterReminders: checked })}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Target className="w-4 h-4 text-nutrition" />
+                          <span className="text-sm text-muted-foreground">Goal Check-ins</span>
+                          <span className="text-[10px] text-muted-foreground">(12PM, 8PM)</span>
+                        </div>
+                        <Switch 
+                          checked={notificationSettings.goalCheckIns}
+                          onCheckedChange={(checked) => updateNotificationSettings({ goalCheckIns: checked })}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-primary" />
+                          <span className="text-sm text-muted-foreground">AI Motivation</span>
+                          <span className="text-[10px] text-muted-foreground">(9AM daily)</span>
+                        </div>
+                        <Switch 
+                          checked={notificationSettings.aiMotivation}
+                          onCheckedChange={(checked) => updateNotificationSettings({ aiMotivation: checked })}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-accent-foreground" />
+                          <span className="text-sm text-muted-foreground">Weekly Recap</span>
+                          <span className="text-[10px] text-muted-foreground">(Sun 7PM)</span>
+                        </div>
+                        <Switch 
+                          checked={notificationSettings.weeklyRecap}
+                          onCheckedChange={(checked) => updateNotificationSettings({ weeklyRecap: checked })}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Test Notification Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2"
+                      onClick={async () => {
+                        const sent = await sendTestNotification();
+                        if (sent) {
+                          toast.success('Test notification sent!');
+                        } else {
+                          toast.error('Could not send notification');
+                        }
+                      }}
+                    >
+                      <Bell className="w-4 h-4 mr-2" />
+                      Send Test Notification
+                    </Button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="p-3 rounded-xl bg-muted/50 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Notifications are not supported in this browser.
+                </p>
+              </div>
+            )}
           </div>
         </DashboardCard>
       </div>
