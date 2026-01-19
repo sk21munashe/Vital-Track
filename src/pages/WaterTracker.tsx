@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, Droplets, Plus, Target, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format, subDays } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 import { DashboardCard } from '@/components/DashboardCard';
 import { useWellnessData } from '@/hooks/useWellnessData';
@@ -20,6 +21,7 @@ import { toast } from 'sonner';
 
 export default function WaterTracker() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [showGoalDialog, setShowGoalDialog] = useState(false);
   const [customGoal, setCustomGoal] = useState('');
   const [showCustomAmount, setShowCustomAmount] = useState(false);
@@ -67,8 +69,8 @@ export default function WaterTracker() {
 
   const handleAddWater = (amount: number) => {
     addWater(amount);
-    toast.success(`Added ${amount}ml of water! 💧`, {
-      description: `+10 points earned`,
+    toast.success(t('water.addedWater', { amount }), {
+      description: t('common.pointsEarned', { points: 10 }),
     });
   };
 
@@ -86,7 +88,7 @@ export default function WaterTracker() {
     if (goal >= 500 && goal <= 10000) {
       updateGoals({ waterGoal: goal });
       setShowGoalDialog(false);
-      toast.success('Water goal updated!');
+      toast.success(t('water.goalUpdated'));
     }
   };
 
@@ -124,8 +126,8 @@ export default function WaterTracker() {
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-gradient-water truncate">Water Tracker</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">Stay hydrated, stay healthy</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gradient-water truncate">{t('water.title')}</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">{t('water.subtitle')}</p>
           </div>
         </div>
       </header>
@@ -171,7 +173,7 @@ export default function WaterTracker() {
             
             {/* Summary Text */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-xs sm:text-sm text-muted-foreground mb-1">Today's Intake</h3>
+              <h3 className="text-xs sm:text-sm text-muted-foreground mb-1">{t('water.todaysIntake')}</h3>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl sm:text-3xl font-bold text-water">
                   {(todayWater / 1000).toFixed(1)}
@@ -182,8 +184,8 @@ export default function WaterTracker() {
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {todayWater >= profile.goals.waterGoal 
-                  ? "🎉 Goal reached!" 
-                  : `${profile.goals.waterGoal - todayWater}ml to go`
+                  ? t('water.goalReached')
+                  : t('water.toGo', { amount: profile.goals.waterGoal - todayWater })
                 }
               </p>
             </div>
@@ -197,7 +199,7 @@ export default function WaterTracker() {
         >
           <Target className="w-4 h-4 text-water group-hover:scale-110 transition-transform" />
           <span className="text-sm font-medium text-water">
-            {hasAIPlan ? 'AI Plan Goal' : 'Set Daily Goal'}
+            {hasAIPlan ? t('water.aiPlanGoal') : t('water.setDailyGoal')}
           </span>
           <span className="text-xs text-muted-foreground ml-1">
             ({profile.goals.waterGoal / 1000}L)
@@ -210,7 +212,7 @@ export default function WaterTracker() {
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
         <h2 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
           <Droplets className="w-5 h-5 text-water" />
-          Add Water
+          {t('water.addWater')}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 relative z-10">
           {[250, 500, 750, 1000].map((amount) => (
@@ -224,7 +226,7 @@ export default function WaterTracker() {
                 {amount >= 1000 ? `${amount / 1000}L` : `${amount}ml`}
               </span>
               <span className="text-xs text-muted-foreground">
-                {Math.round(amount / 250)} glass{amount > 250 ? 'es' : ''}
+                {amount === 250 ? t('dashboard.oneGlass') : amount === 500 ? t('dashboard.twoGlasses') : amount === 750 ? t('dashboard.threeGlasses') : t('dashboard.fourGlasses')}
               </span>
             </Button>
           ))}
@@ -235,13 +237,13 @@ export default function WaterTracker() {
           className="w-full mt-3"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Custom Amount
+          {t('water.customAmount')}
         </Button>
       </div>
 
       {/* Week Chart */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8" delay={0.2}>
-        <h2 className="text-base sm:text-lg font-semibold mb-4">Last 7 Days</h2>
+        <h2 className="text-base sm:text-lg font-semibold mb-4">{t('water.last7Days')}</h2>
         <div className="flex items-end justify-between h-24 sm:h-32 gap-1">
           {weekData.map((day, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1 sm:gap-2">
@@ -263,16 +265,16 @@ export default function WaterTracker() {
           ))}
         </div>
         <div className="flex justify-between mt-3 text-[10px] sm:text-xs text-muted-foreground">
-          <span>Goal: {profile.goals.waterGoal / 1000}L/day</span>
+          <span>{t('water.goal')}: {profile.goals.waterGoal / 1000}L/{t('water.day')}</span>
           <span>
-            Avg: {Math.round(weekData.reduce((s, d) => s + d.amount, 0) / 7 / 100) / 10}L
+            {t('water.avg')}: {Math.round(weekData.reduce((s, d) => s + d.amount, 0) / 7 / 100) / 10}L
           </span>
         </div>
       </DashboardCard>
 
       {/* Today's Log */}
       <DashboardCard className="mx-4 sm:mx-5 md:mx-8 mt-4 sm:mt-6" delay={0.3}>
-        <h2 className="text-base sm:text-lg font-semibold mb-3">Today's Log</h2>
+        <h2 className="text-base sm:text-lg font-semibold mb-3">{t('water.todaysLog')}</h2>
         {waterLogs
           .filter(log => log.date === format(new Date(), 'yyyy-MM-dd'))
           .slice(-5)
@@ -289,7 +291,7 @@ export default function WaterTracker() {
             </div>
           ))}
         {waterLogs.filter(log => log.date === format(new Date(), 'yyyy-MM-dd')).length === 0 && (
-          <p className="text-center text-muted-foreground py-4 text-sm">No water logged today yet</p>
+          <p className="text-center text-muted-foreground py-4 text-sm">{t('water.noWaterLogged')}</p>
         )}
       </DashboardCard>
 
@@ -297,19 +299,19 @@ export default function WaterTracker() {
       <Dialog open={showCustomAmount} onOpenChange={setShowCustomAmount}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Custom Amount</DialogTitle>
+            <DialogTitle>{t('water.addCustomAmount')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="flex gap-2">
               <Input
                 type="number"
-                placeholder="Amount in ml"
+                placeholder={t('water.amountInMl')}
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
                 max={5000}
               />
               <Button onClick={handleCustomAmount} className="bg-water hover:bg-water-dark">
-                Add
+                {t('common.add')}
               </Button>
             </div>
           </div>
@@ -320,21 +322,21 @@ export default function WaterTracker() {
       <Dialog open={showGoalDialog} onOpenChange={setShowGoalDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Set Daily Water Goal</DialogTitle>
+            <DialogTitle>{t('water.setDailyWaterGoal')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div>
               <p className="text-sm text-muted-foreground mb-2">
-                Current goal: {profile.goals.waterGoal}ml ({profile.goals.waterGoal / 1000}L)
+                {t('water.currentGoal')}: {profile.goals.waterGoal}ml ({profile.goals.waterGoal / 1000}L)
               </p>
               <div className="flex gap-2">
                 <Input
                   type="number"
-                  placeholder="Goal in ml (e.g., 2000)"
+                  placeholder={t('water.goalInMl')}
                   value={customGoal}
                   onChange={(e) => setCustomGoal(e.target.value)}
                 />
-                <Button onClick={handleUpdateGoal}>Save</Button>
+                <Button onClick={handleUpdateGoal}>{t('common.save')}</Button>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -346,7 +348,7 @@ export default function WaterTracker() {
                   onClick={() => {
                     updateGoals({ waterGoal: goal });
                     setShowGoalDialog(false);
-                    toast.success('Water goal updated!');
+                    toast.success(t('water.goalUpdated'));
                   }}
                 >
                   {goal / 1000}L
