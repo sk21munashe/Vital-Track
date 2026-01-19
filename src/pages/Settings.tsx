@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { 
   ChevronLeft, 
   User, 
@@ -57,15 +58,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useTourStatus } from '@/components/WelcomeTour';
-
-const LANGUAGES = [
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Spanish' },
-  { value: 'fr', label: 'French' },
-  { value: 'de', label: 'German' },
-  { value: 'pt', label: 'Portuguese' },
-  { value: 'it', label: 'Italian' },
-];
+import { SUPPORTED_LANGUAGES } from '@/i18n/config';
 
 interface UserSettings {
   username: string;
@@ -83,6 +76,7 @@ interface UserSettings {
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { profile, updateProfile } = useWellnessData();
   const { displayName, updateDisplayName } = useUserProfile();
   const { resetTour } = useTourStatus();
@@ -103,7 +97,7 @@ export default function Settings() {
     height: '',
     weight: '',
     units: 'metric',
-    language: 'en',
+    language: i18n.language,
     notifications: {
       dailyReminders: true,
       goalAlerts: true,
@@ -163,7 +157,9 @@ export default function Settings() {
 
   const handleLanguageChange = (value: string) => {
     setSettings(prev => ({ ...prev, language: value }));
-    toast.success('Language preference saved');
+    i18n.changeLanguage(value);
+    localStorage.setItem('app_language', value);
+    toast.success(t('settings.languageSaved'));
   };
 
   const handleNotificationToggle = (key: keyof UserSettings['notifications']) => {
@@ -225,7 +221,7 @@ export default function Settings() {
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold">Settings</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">{t('settings.title')}</h1>
           </div>
         </div>
       </header>
@@ -233,19 +229,19 @@ export default function Settings() {
       {/* Account Section */}
       <div className="px-4 sm:px-5 md:px-8 mt-4">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-          Account
+          {t('settings.account')}
         </h2>
         <DashboardCard className="p-1">
           <SettingRow 
             icon={User}
-            label="Personal Details"
-            value={displayName || 'Not set'}
+            label={t('settings.personalDetails')}
+            value={displayName || t('settings.notSet')}
             onClick={() => setShowEditDetails(true)}
           />
           <div className="border-t border-border/50 mx-3" />
           <SettingRow 
             icon={LogOut}
-            label="Sign Out"
+            label={t('settings.signOut')}
             onClick={() => setShowSignOutDialog(true)}
           />
           <div className="border-t border-border/50 mx-3" />
@@ -257,7 +253,7 @@ export default function Settings() {
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
                 <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" />
               </div>
-              <span className="text-sm sm:text-base font-medium text-destructive">Delete Account</span>
+              <span className="text-sm sm:text-base font-medium text-destructive">{t('settings.deleteAccount')}</span>
             </div>
             <ChevronRight className="w-4 h-4 text-destructive" />
           </button>
@@ -267,7 +263,7 @@ export default function Settings() {
       {/* General Section */}
       <div className="px-4 sm:px-5 md:px-8 mt-6">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-          General
+          {t('settings.general')}
         </h2>
         <DashboardCard className="p-1">
           <div className="p-3 sm:p-4">
@@ -276,16 +272,16 @@ export default function Settings() {
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
-                <span className="text-sm sm:text-base font-medium">Language</span>
+                <span className="text-sm sm:text-base font-medium">{t('settings.language')}</span>
               </div>
               <Select value={settings.language} onValueChange={handleLanguageChange}>
                 <SelectTrigger className="w-[120px] sm:w-[140px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {LANGUAGES.map(lang => (
-                    <SelectItem key={lang.value} value={lang.value}>
-                      {lang.label}
+                  {SUPPORTED_LANGUAGES.map(lang => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.nativeName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -302,7 +298,7 @@ export default function Settings() {
                   <Ruler className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
                 <div>
-                  <span className="text-sm sm:text-base font-medium">Units</span>
+                  <span className="text-sm sm:text-base font-medium">{t('settings.units')}</span>
                   <p className="text-xs text-muted-foreground">
                     {settings.units === 'metric' ? 'kg, cm, mL' : 'lbs, feet, fl oz'}
                   </p>
@@ -313,8 +309,8 @@ export default function Settings() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="metric">Metric</SelectItem>
-                  <SelectItem value="imperial">Imperial</SelectItem>
+                  <SelectItem value="metric">{t('settings.metric')}</SelectItem>
+                  <SelectItem value="imperial">{t('settings.imperial')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -330,8 +326,8 @@ export default function Settings() {
                   <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
                 <div>
-                  <span className="text-sm sm:text-base font-medium">Smart Reminders</span>
-                  <p className="text-xs text-muted-foreground">AI-powered motivational notifications</p>
+                  <span className="text-sm sm:text-base font-medium">{t('settings.smartReminders')}</span>
+                  <p className="text-xs text-muted-foreground">{t('settings.aiPoweredNotifications')}</p>
                 </div>
               </div>
             </div>
@@ -346,12 +342,12 @@ export default function Settings() {
                     onClick={async () => {
                       const success = await enableNotifications();
                       if (success) {
-                        toast.success('Notifications enabled! 🔔', {
-                          description: 'You\'ll receive personalized reminders throughout the day.',
+                        toast.success(t('settings.notificationsEnabled'), {
+                          description: t('settings.notificationsEnabledDesc'),
                         });
                       } else if (permissionStatus === 'denied') {
-                        toast.error('Notifications blocked', {
-                          description: 'Please enable notifications in your browser settings.',
+                        toast.error(t('settings.notificationsBlocked'), {
+                          description: t('settings.notificationsBlockedDesc'),
                         });
                       }
                     }}
@@ -360,28 +356,28 @@ export default function Settings() {
                   >
                     <BellRing className="w-5 h-5 text-primary" />
                     <span className="font-medium text-primary">
-                      {notificationLoading ? 'Enabling...' : 'Enable Smart Reminders'}
+                      {notificationLoading ? t('settings.enabling') : t('settings.enableSmartReminders')}
                     </span>
                     <Sparkles className="w-4 h-4 text-primary" />
                   </motion.button>
                 ) : (
-                  <>
+                <>
                     {/* Enabled State - Show toggle options */}
                     <div className="flex items-center justify-between p-3 rounded-xl bg-green-500/10 border border-green-500/20">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-sm text-green-600 dark:text-green-400 font-medium">Notifications Active</span>
+                        <span className="text-sm text-green-600 dark:text-green-400 font-medium">{t('settings.notificationsActive')}</span>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => {
                           disableNotifications();
-                          toast.success('Notifications disabled');
+                          toast.success(t('settings.notificationsDisabled'));
                         }}
                         className="text-xs text-muted-foreground hover:text-destructive"
                       >
-                        Disable
+                        {t('settings.disable')}
                       </Button>
                     </div>
                     
@@ -390,7 +386,7 @@ export default function Settings() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Droplets className="w-4 h-4 text-water" />
-                          <span className="text-sm text-muted-foreground">Water Reminders</span>
+                          <span className="text-sm text-muted-foreground">{t('settings.waterReminders')}</span>
                           <span className="text-[10px] text-muted-foreground">(10AM, 2PM, 6PM)</span>
                         </div>
                         <Switch 
@@ -402,7 +398,7 @@ export default function Settings() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Target className="w-4 h-4 text-nutrition" />
-                          <span className="text-sm text-muted-foreground">Goal Check-ins</span>
+                          <span className="text-sm text-muted-foreground">{t('settings.goalCheckIns')}</span>
                           <span className="text-[10px] text-muted-foreground">(12PM, 8PM)</span>
                         </div>
                         <Switch 
@@ -414,7 +410,7 @@ export default function Settings() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Sparkles className="w-4 h-4 text-primary" />
-                          <span className="text-sm text-muted-foreground">AI Motivation</span>
+                          <span className="text-sm text-muted-foreground">{t('settings.aiMotivation')}</span>
                           <span className="text-[10px] text-muted-foreground">(9AM daily)</span>
                         </div>
                         <Switch 
@@ -426,7 +422,7 @@ export default function Settings() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-accent-foreground" />
-                          <span className="text-sm text-muted-foreground">Weekly Recap</span>
+                          <span className="text-sm text-muted-foreground">{t('settings.weeklyRecap')}</span>
                           <span className="text-[10px] text-muted-foreground">(Sun 7PM)</span>
                         </div>
                         <Switch 
@@ -444,14 +440,14 @@ export default function Settings() {
                       onClick={async () => {
                         const sent = await sendTestNotification();
                         if (sent) {
-                          toast.success('Test notification sent!');
+                          toast.success(t('settings.testNotificationSent'));
                         } else {
-                          toast.error('Could not send notification');
+                          toast.error(t('settings.couldNotSendNotification'));
                         }
                       }}
                     >
                       <Bell className="w-4 h-4 mr-2" />
-                      Send Test Notification
+                      {t('settings.sendTestNotification')}
                     </Button>
                   </>
                 )}
@@ -459,7 +455,7 @@ export default function Settings() {
             ) : (
               <div className="p-3 rounded-xl bg-muted/50 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Notifications are not supported in this browser.
+                  {t('settings.notificationsNotSupported')}
                 </p>
               </div>
             )}
@@ -470,12 +466,12 @@ export default function Settings() {
       {/* Help & Support Section */}
       <div className="px-4 sm:px-5 md:px-8 mt-6">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-          Help
+          {t('settings.help')}
         </h2>
         <DashboardCard className="p-1">
           <SettingRow 
             icon={RotateCcw}
-            label="Replay App Tour"
+            label={t('settings.replayTour')}
             onClick={handleReplayTour}
           />
         </DashboardCard>
@@ -484,36 +480,36 @@ export default function Settings() {
       {/* Support Section */}
       <div className="px-4 sm:px-5 md:px-8 mt-6 mb-4">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-          Support
+          {t('settings.support')}
         </h2>
         <DashboardCard className="p-1">
           <SettingRow 
             icon={Shield}
-            label="Privacy Policy"
+            label={t('settings.privacyPolicy')}
             disabled
           />
           <div className="border-t border-border/50 mx-3" />
           <SettingRow 
             icon={Mail}
-            label="Contact Us"
+            label={t('settings.contactUs')}
             disabled
           />
           <div className="border-t border-border/50 mx-3" />
           <SettingRow 
             icon={Share2}
-            label="Share App"
+            label={t('settings.shareApp')}
             disabled
           />
           <div className="border-t border-border/50 mx-3" />
           <SettingRow 
             icon={Star}
-            label="Rate Us"
+            label={t('settings.rateUs')}
             disabled
           />
           <div className="border-t border-border/50 mx-3" />
           <SettingRow 
             icon={Info}
-            label="About"
+            label={t('settings.about')}
             value="v1.0.0"
             disabled
           />
@@ -528,49 +524,49 @@ export default function Settings() {
       <Dialog open={showEditDetails} onOpenChange={setShowEditDetails}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Personal Details</DialogTitle>
+            <DialogTitle>{t('settings.personalDetails')}</DialogTitle>
             <DialogDescription>
-              Update your personal information
+              {t('settings.updatePersonalInfo')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div>
-              <Label>Username</Label>
+              <Label>{t('settings.username')}</Label>
               <Input
                 value={settings.username}
                 onChange={(e) => setSettings(prev => ({ ...prev, username: e.target.value }))}
-                placeholder="Your name"
+                placeholder={t('settings.yourName')}
               />
             </div>
             <div>
-              <Label>Age</Label>
+              <Label>{t('settings.age')}</Label>
               <Input
                 type="number"
                 value={settings.age}
                 onChange={(e) => setSettings(prev => ({ ...prev, age: e.target.value }))}
-                placeholder="e.g., 25"
+                placeholder="25"
               />
             </div>
             <div>
-              <Label>Height ({settings.units === 'metric' ? 'cm' : 'feet'})</Label>
+              <Label>{t('settings.height')} ({settings.units === 'metric' ? 'cm' : 'feet'})</Label>
               <Input
                 type="number"
                 value={settings.height}
                 onChange={(e) => setSettings(prev => ({ ...prev, height: e.target.value }))}
-                placeholder={settings.units === 'metric' ? 'e.g., 175' : 'e.g., 5.9'}
+                placeholder={settings.units === 'metric' ? '175' : '5.9'}
               />
             </div>
             <div>
-              <Label>Weight ({settings.units === 'metric' ? 'kg' : 'lbs'})</Label>
+              <Label>{t('settings.weight')} ({settings.units === 'metric' ? 'kg' : 'lbs'})</Label>
               <Input
                 type="number"
                 value={settings.weight}
                 onChange={(e) => setSettings(prev => ({ ...prev, weight: e.target.value }))}
-                placeholder={settings.units === 'metric' ? 'e.g., 70' : 'e.g., 154'}
+                placeholder={settings.units === 'metric' ? '70' : '154'}
               />
             </div>
             <Button onClick={handleSaveDetails} className="w-full">
-              Save Changes
+              {t('common.save')}
             </Button>
           </div>
         </DialogContent>
@@ -580,14 +576,14 @@ export default function Settings() {
       <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Sign Out</AlertDialogTitle>
+            <AlertDialogTitle>{t('settings.signOut')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to sign out of your account?
+              {t('settings.signOutConfirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut}>{t('settings.signOut')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -596,18 +592,18 @@ export default function Settings() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive">Delete Account</AlertDialogTitle>
+            <AlertDialogTitle className="text-destructive">{t('settings.deleteAccount')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+              {t('settings.deleteAccountConfirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteAccount}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Account
+              {t('settings.deleteAccount')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
