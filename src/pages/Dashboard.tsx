@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { format, subDays } from 'date-fns';
 import { Droplets, Heart, Flame } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import { useUserPlan } from '@/contexts/UserPlanContext';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,6 @@ import {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   const {
@@ -131,7 +129,7 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col gap-6 p-4 pb-24">
           {/* Section 1: Journey (60%) */}
           <section className="min-h-[55vh]">
-            <h2 className="text-lg font-bold text-foreground mb-3">{t('dashboard.todaysJourney')}</h2>
+            <h2 className="text-lg font-bold text-foreground mb-3">Today's Journey</h2>
             <div className="h-[50vh] rounded-2xl overflow-hidden shadow-lg">
               <SpaceJourney 
                 data={journeyData}
@@ -158,7 +156,7 @@ export default function Dashboard() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Droplets className="w-5 h-5 text-water" />
-                {t('dashboard.quickAddWater')}
+                Quick Add Water
               </DialogTitle>
             </DialogHeader>
             <div className="grid grid-cols-3 gap-3 mt-4">
@@ -171,7 +169,7 @@ export default function Dashboard() {
                 >
                   <span className="text-lg font-bold">{amount}ml</span>
                   <span className="text-xs text-muted-foreground">
-                    {amount === 250 ? t('dashboard.oneGlass') : amount === 500 ? t('dashboard.twoGlasses') : t('dashboard.threeGlasses')}
+                    {amount === 250 ? '1 glass' : amount === 500 ? '2 glasses' : '3 glasses'}
                   </span>
                 </Button>
               ))}
@@ -189,7 +187,7 @@ export default function Dashboard() {
                 onClick={() => navigate('/water')}
                 className="h-16"
               >
-                <span className="text-sm">{t('dashboard.moreOptions')} →</span>
+                <span className="text-sm">More options →</span>
               </Button>
             </div>
           </DialogContent>

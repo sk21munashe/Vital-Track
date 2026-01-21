@@ -2,24 +2,21 @@ import { NavLink } from '@/components/NavLink';
 import { Home, Droplets, Utensils, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
+
+const navItems = [
+  { to: '/', icon: Home, label: 'Home' },
+  { to: '/water', icon: Droplets, label: 'Water' },
+  { to: '/calories', icon: Utensils, label: 'Calories' },
+  { to: '/profile', icon: User, label: 'Profile' },
+];
 
 export function BottomNav() {
-  const { t } = useTranslation();
-  
-  const navItems = [
-    { to: '/', icon: Home, labelKey: 'nav.home' },
-    { to: '/water', icon: Droplets, labelKey: 'nav.water' },
-    { to: '/calories', icon: Utensils, labelKey: 'nav.calories' },
-    { to: '/profile', icon: User, labelKey: 'nav.profile' },
-  ];
-
   return (
     <nav className="flex-shrink-0 w-full z-50 pb-safe">
       <div className="mx-auto max-w-lg">
         <div className="mx-3 mb-3 glass rounded-2xl p-2 shadow-lg">
           <div className="flex items-center justify-around">
-            {navItems.map(({ to, icon: Icon, labelKey }) => (
+            {navItems.map(({ to, icon: Icon, label }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -35,7 +32,7 @@ export function BottomNav() {
                       <Icon className={cn('w-5 h-5', isActive && 'text-primary')} />
                     </motion.div>
                     <span className={cn('text-xs font-medium', isActive && 'text-primary')}>
-                      {t(labelKey)}
+                      {label}
                     </span>
                   </>
                 )}

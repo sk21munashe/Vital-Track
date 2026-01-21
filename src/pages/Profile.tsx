@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, User, Star, Flame, Edit2, Settings, Target, Droplets, Utensils, Sparkles, Loader2, UtensilsCrossed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { DashboardCard } from '@/components/DashboardCard';
 import { MealPlanSection } from '@/components/MealPlanSection';
 import { useWellnessData } from '@/hooks/useWellnessData';
@@ -22,7 +21,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Profile() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showEditGoals, setShowEditGoals] = useState(false);
@@ -157,7 +155,7 @@ export default function Profile() {
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold">{t('profile.title')}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Profile</h1>
           </div>
           <button
             onClick={() => navigate('/settings')}
@@ -190,11 +188,11 @@ export default function Profile() {
             <div className="flex items-center gap-3 sm:gap-4 mt-2 flex-wrap">
               <div className="flex items-center gap-1">
                 <Flame className="w-4 h-4 text-orange-500" />
-                <span className="text-xs sm:text-sm font-medium">{profile.streak} {t('dashboard.dayStreak')}</span>
+                <span className="text-xs sm:text-sm font-medium">{profile.streak} day streak</span>
               </div>
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 text-purple-500" />
-                <span className="text-xs sm:text-sm font-medium">{profile.totalPoints} {t('common.pts')}</span>
+                <span className="text-xs sm:text-sm font-medium">{profile.totalPoints} pts</span>
               </div>
             </div>
           </div>
@@ -203,7 +201,7 @@ export default function Profile() {
 
       {/* Today's Points */}
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
-        <h2 className="text-base sm:text-lg font-semibold mb-3">{t('profile.todaysPoints')}</h2>
+        <h2 className="text-base sm:text-lg font-semibold mb-3">Today's Points</h2>
         <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-center">
           <motion.div
             initial={{ scale: 0 }}
@@ -212,7 +210,7 @@ export default function Profile() {
           >
             {getTodayPoints()}
           </motion.div>
-          <p className="text-xs sm:text-sm opacity-90 mt-1">{t('profile.pointsEarnedToday')}</p>
+          <p className="text-xs sm:text-sm opacity-90 mt-1">points earned today</p>
         </div>
       </div>
 
@@ -220,7 +218,7 @@ export default function Profile() {
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
         <h2 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
           <UtensilsCrossed className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-          {t('profile.myMealPlan')}
+          My Meal Plan
         </h2>
         <MealPlanSection />
       </div>
@@ -230,7 +228,7 @@ export default function Profile() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
             <Target className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-            {t('profile.dailyGoals')}
+            Daily Goals
           </h2>
           <Button
             variant="ghost"
@@ -244,7 +242,7 @@ export default function Profile() {
             }}
           >
             <Edit2 className="w-4 h-4 mr-1" />
-            {t('common.edit')}
+            Edit
           </Button>
         </div>
 
@@ -255,8 +253,8 @@ export default function Profile() {
                 <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-water" />
               </div>
               <div>
-                <p className="text-sm sm:text-base font-medium">{t('profile.waterIntake')}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">{t('profile.dailyHydrationGoal')}</p>
+                <p className="text-sm sm:text-base font-medium">Water Intake</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Daily hydration goal</p>
               </div>
             </div>
             <span className="text-base sm:text-lg font-bold text-water">{profile.goals.waterGoal / 1000}L</span>
@@ -268,8 +266,8 @@ export default function Profile() {
                 <Utensils className="w-4 h-4 sm:w-5 sm:h-5 text-nutrition" />
               </div>
               <div>
-                <p className="text-sm sm:text-base font-medium">{t('profile.caloriesTarget')}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">{t('profile.dailyCalorieTarget')}</p>
+                <p className="text-sm sm:text-base font-medium">Calories</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Daily calorie target</p>
               </div>
             </div>
             <span className="text-base sm:text-lg font-bold text-nutrition">{profile.goals.calorieGoal}</span>
@@ -286,19 +284,19 @@ export default function Profile() {
       <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('profile.editProfile')}</DialogTitle>
+            <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div>
-              <Label>{t('profile.yourName')}</Label>
+              <Label>Name</Label>
               <Input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                placeholder={t('profile.yourName')}
+                placeholder="Your name"
               />
             </div>
             <Button onClick={handleUpdateProfile} className="w-full">
-              {t('profile.saveChanges')}
+              Save Changes
             </Button>
           </div>
         </DialogContent>
@@ -308,7 +306,7 @@ export default function Profile() {
       <Dialog open={showEditGoals} onOpenChange={setShowEditGoals}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('profile.setDailyGoals')}</DialogTitle>
+            <DialogTitle>Set Daily Goals</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             {/* AI Suggest Button */}
@@ -323,7 +321,7 @@ export default function Profile() {
               ) : (
                 <Sparkles className="w-4 h-4 mr-2 text-primary" />
               )}
-              {isLoadingAI ? t('profile.gettingAISuggestions') : t('profile.getAISuggestedGoals')}
+              {isLoadingAI ? 'Getting AI Suggestions...' : 'Get AI Suggested Goals'}
             </Button>
 
             <div className="relative">
@@ -331,12 +329,12 @@ export default function Profile() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">{t('profile.orSetManually')}</span>
+                <span className="bg-background px-2 text-muted-foreground">or set manually</span>
               </div>
             </div>
 
             <div>
-              <Label>{t('profile.dailyWaterGoal')}</Label>
+              <Label>Daily Water Goal (ml)</Label>
               <Input
                 type="number"
                 value={editGoals.water}
@@ -345,7 +343,7 @@ export default function Profile() {
               />
             </div>
             <div>
-              <Label>{t('profile.dailyCalorieGoal')}</Label>
+              <Label>Daily Calorie Goal</Label>
               <Input
                 type="number"
                 value={editGoals.calories}
@@ -354,7 +352,7 @@ export default function Profile() {
               />
             </div>
             <Button onClick={handleUpdateGoals} className="w-full">
-              {t('profile.saveGoals')}
+              Save Goals
             </Button>
           </div>
         </DialogContent>

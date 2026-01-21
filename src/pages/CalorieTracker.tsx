@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Utensils, Plus, Search, Calculator, Apple, Coffee, Moon, Cookie, Camera, ChevronDown, ChevronUp, Pencil, Trash2, Target, Settings, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
 import { DashboardCard } from '@/components/DashboardCard';
 import { ProgressRing } from '@/components/ProgressRing';
 import { useWellnessData } from '@/hooks/useWellnessData';
@@ -45,15 +44,14 @@ import {
 } from '@/components/AIScanDiscoveryPrompts';
 
 const mealTypes = [
-  { id: 'breakfast', icon: Coffee },
-  { id: 'lunch', icon: Apple },
-  { id: 'dinner', icon: Moon },
-  { id: 'snack', icon: Cookie },
+  { id: 'breakfast', label: 'Breakfast', icon: Coffee, time: 'Morning' },
+  { id: 'lunch', label: 'Lunch', icon: Apple, time: 'Midday' },
+  { id: 'dinner', label: 'Dinner', icon: Moon, time: 'Evening' },
+  { id: 'snack', label: 'Snack', icon: Cookie, time: 'Anytime' },
 ] as const;
 
 
 export default function CalorieTracker() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showAddFood, setShowAddFood] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
@@ -300,8 +298,8 @@ export default function CalorieTracker() {
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-gradient-nutrition truncate">{t('calories.title')}</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">{t('calories.subtitle')}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gradient-nutrition truncate">Calorie Tracker</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Fuel your body right</p>
           </div>
         </div>
       </header>
@@ -326,26 +324,26 @@ export default function CalorieTracker() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <p className="text-xs sm:text-sm text-muted-foreground">{t('calories.caloriesRemaining')}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Calories Remaining</p>
               {hasAIPlan && (
                 <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-nutrition/10 text-nutrition">
                   <Sparkles className="w-3 h-3" />
-                  {t('calories.aiPlan')}
+                  AI Plan
                 </span>
               )}
             </div>
             <p className={`text-2xl sm:text-3xl font-bold ${caloriesRemaining >= 0 ? 'text-nutrition' : 'text-destructive'}`}>
               {Math.abs(caloriesRemaining)}
               <span className="text-sm sm:text-lg font-normal text-muted-foreground ml-1">
-                {caloriesRemaining < 0 ? t('calories.over') : t('calories.left')}
+                {caloriesRemaining < 0 ? 'over' : 'left'}
               </span>
             </p>
             <div className="flex items-center gap-3 sm:gap-4 mt-2 sm:mt-3 text-xs sm:text-sm">
               <span className="text-muted-foreground">
-                {hasAIPlan ? t('water.aiPlanGoal') : t('common.goal')}: <span className="text-foreground font-medium">{profile.goals.calorieGoal}</span>
+                {hasAIPlan ? 'AI Plan Goal' : 'Goal'}: <span className="text-foreground font-medium">{profile.goals.calorieGoal}</span>
               </span>
               <span className="text-muted-foreground">
-                {t('calories.consumed')}: <span className="text-foreground font-medium">{todayCalories}</span>
+                Consumed: <span className="text-foreground font-medium">{todayCalories}</span>
               </span>
             </div>
           </div>
@@ -363,25 +361,25 @@ export default function CalorieTracker() {
         {/* Macro Summary */}
         {(profile.goals.macros?.protein || profile.goals.macros?.carbs || profile.goals.macros?.fat) && (
           <div className="mt-4 pt-4 border-t border-border/50">
-            <p className="text-xs text-muted-foreground mb-2">{t('calories.todaysMacros')}</p>
+            <p className="text-xs text-muted-foreground mb-2">Today's Macros</p>
             <div className="grid grid-cols-3 gap-2">
               {profile.goals.macros?.protein && (
                 <div className="text-center p-2 rounded-lg bg-blue-500/10">
-                  <p className="text-xs text-muted-foreground">{t('calories.protein')}</p>
+                  <p className="text-xs text-muted-foreground">Protein</p>
                   <p className="font-semibold text-blue-500">{todayMacros.protein}g</p>
                   <p className="text-xs text-muted-foreground">/ {profile.goals.macros.protein}g</p>
                 </div>
               )}
               {profile.goals.macros?.carbs && (
                 <div className="text-center p-2 rounded-lg bg-amber-500/10">
-                  <p className="text-xs text-muted-foreground">{t('calories.carbs')}</p>
+                  <p className="text-xs text-muted-foreground">Carbs</p>
                   <p className="font-semibold text-amber-500">{todayMacros.carbs}g</p>
                   <p className="text-xs text-muted-foreground">/ {profile.goals.macros.carbs}g</p>
                 </div>
               )}
               {profile.goals.macros?.fat && (
                 <div className="text-center p-2 rounded-lg bg-rose-500/10">
-                  <p className="text-xs text-muted-foreground">{t('calories.fat')}</p>
+                  <p className="text-xs text-muted-foreground">Fat</p>
                   <p className="font-semibold text-rose-500">{todayMacros.fat}g</p>
                   <p className="text-xs text-muted-foreground">/ {profile.goals.macros.fat}g</p>
                 </div>
@@ -395,7 +393,7 @@ export default function CalorieTracker() {
       <div className="px-4 sm:px-5 md:px-8 mb-4 sm:mb-6">
         <h2 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
           <Settings className="w-5 h-5 text-nutrition" />
-          {t('calories.nutritionTools')}
+          Nutrition Tools
         </h2>
         <div className="grid grid-cols-2 gap-3">
           <motion.button
@@ -409,8 +407,8 @@ export default function CalorieTracker() {
               <div className="w-10 h-10 rounded-xl bg-nutrition/20 flex items-center justify-center mb-2">
                 <Calculator className="w-5 h-5 text-nutrition" />
               </div>
-              <h3 className="font-semibold text-sm text-left">{t('calories.calorieCalculator')}</h3>
-              <p className="text-xs text-muted-foreground text-left mt-1">{t('calories.calculateNeeds')}</p>
+              <h3 className="font-semibold text-sm text-left">Calorie Calculator</h3>
+              <p className="text-xs text-muted-foreground text-left mt-1">Calculate your daily needs</p>
               {profile.goals.calorieGoal > 0 && (
                 <div className="mt-2 px-2 py-1 rounded-lg bg-nutrition/10 inline-block">
                   <span className="text-xs font-medium text-nutrition">{profile.goals.calorieGoal} cal/day</span>
@@ -430,8 +428,8 @@ export default function CalorieTracker() {
               <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center mb-2">
                 <Target className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="font-semibold text-sm text-left">{t('calories.macroGoals')}</h3>
-              <p className="text-xs text-muted-foreground text-left mt-1">{t('calories.setMacros')}</p>
+              <h3 className="font-semibold text-sm text-left">Macro Goals</h3>
+              <p className="text-xs text-muted-foreground text-left mt-1">Set protein, carbs & fat</p>
               {(profile.goals.macros?.protein || profile.goals.macros?.carbs || profile.goals.macros?.fat) && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {profile.goals.macros?.protein && (
@@ -459,9 +457,8 @@ export default function CalorieTracker() {
           onScanClick={handleOpenScanner}
         />
         
-        <h2 className="text-base sm:text-lg font-semibold mb-3">{t('calories.todaysMeals')}</h2>
-        {mealTypes.map(({ id, icon: Icon }) => {
-          const mealLabel = t(`calories.${id}`);
+        <h2 className="text-base sm:text-lg font-semibold mb-3">Today's Meals</h2>
+        {mealTypes.map(({ id, label, icon: Icon }) => {
           const meals = mealsByType[id] || [];
           const totalCalories = meals.reduce((sum, m) => sum + m.foodItem.calories, 0);
           const isExpanded = expandedMeals[id] ?? false;
@@ -475,7 +472,7 @@ export default function CalorieTracker() {
                       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-nutrition-light flex items-center justify-center">
                         <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-nutrition" />
                       </div>
-                      <span className="text-sm sm:text-base font-medium">{mealLabel}</span>
+                      <span className="text-sm sm:text-base font-medium">{label}</span>
                       <span className="text-xs text-muted-foreground">({meals.length} items)</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -541,7 +538,7 @@ export default function CalorieTracker() {
                           className="w-full py-2 text-xs text-nutrition hover:text-nutrition-dark transition-colors flex items-center justify-center gap-1"
                         >
                           <Plus className="w-3 h-3" />
-                          {t('common.add')}
+                          Add more
                         </button>
                       </motion.div>
                     )}
@@ -556,7 +553,7 @@ export default function CalorieTracker() {
                     }}
                     className="w-full py-2 mt-2 text-xs sm:text-sm text-muted-foreground hover:text-nutrition transition-colors"
                   >
-                    + {t('common.add')} {mealLabel.toLowerCase()}
+                    + Add {label.toLowerCase()}
                   </button>
                 )}
               </DashboardCard>
@@ -587,17 +584,17 @@ export default function CalorieTracker() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Utensils className="w-5 h-5 text-nutrition" />
-              {t('common.add')} {t(`calories.${selectedMealType}`)}
+              Add {mealTypes.find(m => m.id === selectedMealType)?.label}
             </DialogTitle>
           </DialogHeader>
           
           <Tabs defaultValue="search" className="flex-1 overflow-hidden flex flex-col">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="search">{t('common.search')}</TabsTrigger>
-              <TabsTrigger value="custom">{t('calories.customFood')}</TabsTrigger>
+              <TabsTrigger value="search">Search</TabsTrigger>
+              <TabsTrigger value="custom">Custom</TabsTrigger>
               <TabsTrigger value="scan" onClick={handleOpenScanner}>
                 <Camera className="w-4 h-4 mr-1" />
-                {t('scanner.title').split(' ')[0]}
+                Scan
               </TabsTrigger>
             </TabsList>
             
@@ -605,7 +602,7 @@ export default function CalorieTracker() {
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder={t('calories.searchFoods')}
+                  placeholder="Search foods..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -641,7 +638,7 @@ export default function CalorieTracker() {
             
             <TabsContent value="custom" className="space-y-3">
               <div>
-                <Label>{t('calories.foodName')}</Label>
+                <Label>Food Name</Label>
                 <Input
                   placeholder="e.g., Homemade Salad"
                   value={customFood.name}
@@ -649,7 +646,7 @@ export default function CalorieTracker() {
                 />
               </div>
               <div>
-                <Label>{t('calories.caloriesAmount')} *</Label>
+                <Label>Calories *</Label>
                 <Input
                   type="number"
                   placeholder="e.g., 350"
@@ -659,7 +656,7 @@ export default function CalorieTracker() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label>{t('calories.protein')} (g)</Label>
+                  <Label>Protein (g)</Label>
                   <Input
                     type="number"
                     placeholder="0"
@@ -668,7 +665,7 @@ export default function CalorieTracker() {
                   />
                 </div>
                 <div>
-                  <Label>{t('calories.carbs')} (g)</Label>
+                  <Label>Carbs (g)</Label>
                   <Input
                     type="number"
                     placeholder="0"
@@ -677,7 +674,7 @@ export default function CalorieTracker() {
                   />
                 </div>
                 <div>
-                  <Label>{t('calories.fat')} (g)</Label>
+                  <Label>Fat (g)</Label>
                   <Input
                     type="number"
                     placeholder="0"
@@ -692,7 +689,7 @@ export default function CalorieTracker() {
                 disabled={!customFood.name || !customFood.calories}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                {t('calories.addFood')}
+                Add Food
               </Button>
               
               {/* Layer 5: Manual Entry Nudge */}
@@ -702,10 +699,10 @@ export default function CalorieTracker() {
             <TabsContent value="scan" className="flex-1">
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Camera className="w-12 h-12 text-nutrition mb-4" />
-                <p className="text-muted-foreground mb-4">{t('scanner.subtitle')}</p>
+                <p className="text-muted-foreground mb-4">Take a photo of your food to get instant nutritional analysis</p>
                 <Button onClick={handleOpenScanner} className="bg-nutrition hover:bg-nutrition-dark">
                   <Camera className="w-4 h-4 mr-2" />
-                  {t('scanner.takePhoto')}
+                  Open Camera
                 </Button>
               </div>
             </TabsContent>
@@ -727,21 +724,21 @@ export default function CalorieTracker() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="w-5 h-5 text-nutrition" />
-              {t('calories.editFood')}
+              Edit Food
             </DialogTitle>
           </DialogHeader>
           
           {editingFood && (
             <div className="space-y-4">
               <div>
-                <Label>{t('calories.foodName')}</Label>
+                <Label>Food Name</Label>
                 <Input
                   value={editingFood.food.name}
                   onChange={(e) => setEditingFood(prev => prev ? { ...prev, food: { ...prev.food, name: e.target.value } } : null)}
                 />
               </div>
               <div>
-                <Label>{t('calories.caloriesAmount')}</Label>
+                <Label>Calories</Label>
                 <Input
                   type="number"
                   value={editingFood.food.calories}
@@ -750,7 +747,7 @@ export default function CalorieTracker() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label>{t('calories.protein')} (g)</Label>
+                  <Label>Protein (g)</Label>
                   <Input
                     type="number"
                     value={editingFood.food.protein || ''}
@@ -758,7 +755,7 @@ export default function CalorieTracker() {
                   />
                 </div>
                 <div>
-                  <Label>{t('calories.carbs')} (g)</Label>
+                  <Label>Carbs (g)</Label>
                   <Input
                     type="number"
                     value={editingFood.food.carbs || ''}
@@ -766,7 +763,7 @@ export default function CalorieTracker() {
                   />
                 </div>
                 <div>
-                  <Label>{t('calories.fat')} (g)</Label>
+                  <Label>Fat (g)</Label>
                   <Input
                     type="number"
                     value={editingFood.food.fat || ''}
@@ -778,7 +775,7 @@ export default function CalorieTracker() {
                 onClick={handleUpdateFood}
                 className="w-full bg-nutrition hover:bg-nutrition-dark"
               >
-                {t('profile.saveChanges')}
+                Save Changes
               </Button>
             </div>
           )}
@@ -791,15 +788,15 @@ export default function CalorieTracker() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Target className="w-5 h-5 text-nutrition" />
-              {t('calories.macroGoals')}
+              Set Macro Goals
             </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">{t('calories.setMacros')}</p>
+            <p className="text-sm text-muted-foreground">Set your daily macro targets. Leave empty if you don't want to track a specific macro.</p>
             
             <div>
-              <Label>{t('calories.protein')} {t('common.goal')} (g)</Label>
+              <Label>Protein Goal (g)</Label>
               <Input
                 type="number"
                 placeholder="e.g., 150"
@@ -808,7 +805,7 @@ export default function CalorieTracker() {
               />
             </div>
             <div>
-              <Label>{t('calories.carbs')} {t('common.goal')} (g)</Label>
+              <Label>Carbs Goal (g)</Label>
               <Input
                 type="number"
                 placeholder="e.g., 250"
@@ -817,7 +814,7 @@ export default function CalorieTracker() {
               />
             </div>
             <div>
-              <Label>{t('calories.fat')} {t('common.goal')} (g)</Label>
+              <Label>Fat Goal (g)</Label>
               <Input
                 type="number"
                 placeholder="e.g., 65"
@@ -830,7 +827,7 @@ export default function CalorieTracker() {
               onClick={handleSaveMacroGoals}
               className="w-full bg-nutrition hover:bg-nutrition-dark"
             >
-              {t('profile.saveGoals')}
+              Save Macro Goals
             </Button>
           </div>
         </DialogContent>
@@ -842,14 +839,14 @@ export default function CalorieTracker() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calculator className="w-5 h-5 text-nutrition" />
-              {t('calories.calorieCalculator')}
+              Calorie Calculator
             </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>{t('onboarding.age')}</Label>
+                <Label>Age</Label>
                 <Input
                   type="number"
                   placeholder="25"
@@ -858,7 +855,7 @@ export default function CalorieTracker() {
                 />
               </div>
               <div>
-                <Label>{t('onboarding.male')}/{t('onboarding.female')}</Label>
+                <Label>Gender</Label>
                 <Select
                   value={calcData.gender}
                   onValueChange={(value: 'male' | 'female') => setCalcData(prev => ({ ...prev, gender: value }))}
@@ -867,15 +864,15 @@ export default function CalorieTracker() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="male">{t('onboarding.male')}</SelectItem>
-                    <SelectItem value="female">{t('onboarding.female')}</SelectItem>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>{t('onboarding.weightKg')}</Label>
+                <Label>Weight (kg)</Label>
                 <Input
                   type="number"
                   placeholder="70"
@@ -884,7 +881,7 @@ export default function CalorieTracker() {
                 />
               </div>
               <div>
-                <Label>{t('onboarding.heightCm')}</Label>
+                <Label>Height (cm)</Label>
                 <Input
                   type="number"
                   placeholder="175"
@@ -894,7 +891,7 @@ export default function CalorieTracker() {
               </div>
             </div>
             <div>
-              <Label>{t('onboarding.activityLevel')}</Label>
+              <Label>Activity Level</Label>
               <Select
                 value={calcData.activityLevel}
                 onValueChange={(value: typeof calcData.activityLevel) => setCalcData(prev => ({ ...prev, activityLevel: value }))}
@@ -903,16 +900,16 @@ export default function CalorieTracker() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sedentary">{t('onboarding.sedentary')} ({t('onboarding.littleNoExercise')})</SelectItem>
-                  <SelectItem value="light">{t('onboarding.light')} ({t('onboarding.lightExercise')})</SelectItem>
-                  <SelectItem value="moderate">{t('onboarding.moderate')} ({t('onboarding.moderateExercise')})</SelectItem>
-                  <SelectItem value="active">{t('onboarding.active')} ({t('onboarding.activeExercise')})</SelectItem>
-                  <SelectItem value="very_active">{t('onboarding.athlete')} ({t('onboarding.intenseTraining')})</SelectItem>
+                  <SelectItem value="sedentary">Sedentary (little exercise)</SelectItem>
+                  <SelectItem value="light">Light (1-3 days/week)</SelectItem>
+                  <SelectItem value="moderate">Moderate (3-5 days/week)</SelectItem>
+                  <SelectItem value="active">Active (6-7 days/week)</SelectItem>
+                  <SelectItem value="very_active">Very Active (intense daily)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>{t('common.goal')}</Label>
+              <Label>Goal</Label>
               <Select
                 value={calcData.goal}
                 onValueChange={(value: typeof calcData.goal) => setCalcData(prev => ({ ...prev, goal: value }))}
@@ -921,15 +918,15 @@ export default function CalorieTracker() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lose">{t('onboarding.weightLoss')}</SelectItem>
-                  <SelectItem value="maintain">{t('onboarding.maintenance')}</SelectItem>
-                  <SelectItem value="gain">{t('onboarding.weightGain')}</SelectItem>
+                  <SelectItem value="lose">Lose 0.5kg/week</SelectItem>
+                  <SelectItem value="maintain">Maintain Weight</SelectItem>
+                  <SelectItem value="gain">Gain 0.5kg/week</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <Button onClick={calculateBMR} className="w-full">
-              {t('calories.calorieCalculator').split(' ')[0]}
+              Calculate
             </Button>
             
             {calcResult && (
@@ -938,7 +935,7 @@ export default function CalorieTracker() {
                 animate={{ opacity: 1, y: 0 }}
                 className="p-4 rounded-xl bg-nutrition-light text-center"
               >
-                <p className="text-sm text-muted-foreground">{t('profile.dailyCalorieGoal')}</p>
+                <p className="text-sm text-muted-foreground">Your Daily Calorie Target</p>
                 <p className="text-3xl font-bold text-nutrition">{calcResult}</p>
                 <p className="text-xs text-muted-foreground mb-3">calories/day</p>
                 <Button
@@ -946,7 +943,7 @@ export default function CalorieTracker() {
                   size="sm"
                   className="bg-nutrition hover:bg-nutrition-dark"
                 >
-                  {t('common.save')}
+                  Set as My Goal
                 </Button>
               </motion.div>
             )}
