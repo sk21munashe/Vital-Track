@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, X, Sparkles, Apple, Coffee, Moon } from 'lucide-react';
+import { Camera, X, Sparkles, UtensilsCrossed, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -138,7 +138,7 @@ export function EmptyStateCard({ show, onScanClick }: EmptyStateCardProps) {
 
 interface MealTimeBannerProps {
   show: boolean;
-  mealWindow: 'breakfast' | 'lunch' | 'dinner' | null;
+  mealWindow: 'lunch' | 'dinner' | null;
   onScanClick: () => void;
   onDismiss: () => void;
 }
@@ -146,14 +146,12 @@ interface MealTimeBannerProps {
 export function MealTimeBanner({ show, mealWindow, onScanClick, onDismiss }: MealTimeBannerProps) {
   const getMealText = () => {
     switch (mealWindow) {
-      case 'breakfast':
-        return { text: 'Breakfast time?', icon: Coffee };
       case 'lunch':
-        return { text: 'Lunch time?', icon: Apple };
+        return { text: 'Lunch time?', icon: UtensilsCrossed };
       case 'dinner':
         return { text: 'Dinner time?', icon: Moon };
       default:
-        return { text: 'Meal time?', icon: Apple };
+        return { text: 'Meal time?', icon: UtensilsCrossed };
     }
   };
   

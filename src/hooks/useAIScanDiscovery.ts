@@ -12,7 +12,7 @@ interface DiscoveryState {
   showReengagementSuggestion: boolean;
   showEmptyStateCard: boolean;
   showMealTimeBanner: boolean;
-  currentMealWindow: 'breakfast' | 'lunch' | 'dinner' | null;
+  currentMealWindow: 'lunch' | 'dinner' | null;
 }
 
 export function useAIScanDiscovery(hasMealsToday: boolean) {
@@ -24,12 +24,13 @@ export function useAIScanDiscovery(hasMealsToday: boolean) {
     currentMealWindow: null,
   });
 
-  // Get current meal window based on time
-  const getMealWindow = useCallback((): 'breakfast' | 'lunch' | 'dinner' | null => {
+  // Get current meal window based on time (focused on 12 PM lunch, 7 PM dinner)
+  const getMealWindow = useCallback((): 'lunch' | 'dinner' | null => {
     const hour = new Date().getHours();
-    if (hour >= 7 && hour < 10) return 'breakfast';
-    if (hour >= 11 && hour < 14) return 'lunch';
-    if (hour >= 18 && hour < 21) return 'dinner';
+    // Lunch window: 11 AM - 1 PM (centered on 12 PM)
+    if (hour >= 11 && hour <= 13) return 'lunch';
+    // Dinner window: 6 PM - 8 PM (centered on 7 PM)
+    if (hour >= 18 && hour <= 20) return 'dinner';
     return null;
   }, []);
 
