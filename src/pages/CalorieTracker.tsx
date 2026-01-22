@@ -562,21 +562,6 @@ export default function CalorieTracker() {
         })}
       </div>
 
-      {/* Floating AI Scan Button with First-Time Tooltip */}
-      <FirstTimeTooltip
-        show={showFirstTimeTooltip}
-        onDismiss={dismissFirstTimeTooltip}
-        onScanClick={handleOpenScanner}
-      >
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleOpenScanner}
-          className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-nutrition to-nutrition-dark shadow-lg flex items-center justify-center"
-        >
-          <Camera className="w-6 h-6 text-white" />
-        </motion.button>
-      </FirstTimeTooltip>
 
       {/* Add Food Dialog */}
       <Dialog open={showAddFood} onOpenChange={setShowAddFood}>
