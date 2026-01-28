@@ -506,13 +506,13 @@ export default function Settings() {
           <SettingRow 
             icon={Info}
             label="About"
-            value="v1.0.0"
+            value="v2.0.0"
             disabled
           />
         </DashboardCard>
         
         <p className="text-center text-xs text-muted-foreground mt-4">
-          VitalTrack v1.0.0 • Build 1
+          VitalTrack v2.0.0 • Build 2
         </p>
       </div>
 
